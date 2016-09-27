@@ -48,7 +48,7 @@ Temporary Items
 
 # Custom: private information
 *.private
-twitterPass.py
+twitterPass.*
 
 # Custom: Python binary files
 *.pyc
