@@ -11,7 +11,7 @@
 
 
 # -------------------------------------------------------------------
-# imports
+# IMPORTS
 
 import time
 from twython import Twython, TwythonError
@@ -53,16 +53,16 @@ twitter = Twython(APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET)
 # Function callback_tweet(1 argument is mandatory)
 #	callback function that makes a message and tweets it
 def callback_tweet(pin):
-	print ("pin " + str(pin) + " rising edge detected: tweet")
-	tweetText = "This is a tweet from GPIO #5"
+	print ("\npin " + str(pin) + " rising edge detected: tweet")
+	tweetText = "Termpeture is over 30 celsius!!! [" + time.strftime("%Y-%m-%d %H:%M:%S") + "]"
 	if tweetMesg(t=twitter,txt=tweetText):
-		print ("tweeted successfully: " + tweetText)
+		print ("tweeted successfully:\n" + tweetText)
 
 # Twitter pin mode and setup (pull-down resistor: LOW stable value as default)
 pin_arduino = 37
 GPIO.setmode(GPIO.BOARD) 
-GPIO.setup(pin_arduino, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.add_event_detect(pin_arduino, GPIO.RISING, callback=callback_tweet, bouncetime=1000)
+GPIO.setup(pin_arduino, GPIO.IN, pull_up_down=GPIO.PUD_DOWN) 
+GPIO.add_event_detect(pin_arduino, GPIO.RISING, callback=callback_tweet, bouncetime=50)
 
 # Finish pin mode and setup (pull-down resistor: LOW stable value as default)
 pin_finish = 35
@@ -70,7 +70,7 @@ GPIO.setmode(GPIO.BOARD)
 GPIO.setup(pin_finish, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 # wait until pin_finish is rised, to keep alive the callback 
 GPIO.wait_for_edge(pin_finish, GPIO.RISING)
-print("pin " + str(pin_finish) + " rising edge detected: finish")
+print("\npin " + str(pin_finish) + " rising edge detected: finish")
 
 # clear the configuration
 GPIO.cleanup()
