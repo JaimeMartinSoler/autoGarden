@@ -15,6 +15,7 @@
 
 import time
 from twython import Twython, TwythonError
+# import keys and tokens (file 'twitterPass.py' is ignored in .gitignore by GitHub)
 from twitterPass import APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET
 try:
     import RPi.GPIO as GPIO
