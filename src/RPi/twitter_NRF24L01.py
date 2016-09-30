@@ -1,5 +1,18 @@
 #!/usr/bin/python
 
+
+    ## ----------------------------------------------------------------------
+    ## --- twitter_NRF24L01.py                                            ---
+    ## ----------------------------------------------------------------------
+    ## --- autoGarden main RPi file, to manage sensors and Arduino comm.  ---
+    ## --- Arduino requirements: execute ard_NRF24L01_LM35.ino            ---
+    ## --- RPi comm.: NRF24L01 2.4GHz wireless transciever                ---
+    ## ----------------------------------------------------------------------
+    ## --- Author: Jaime Martin Soler                                     ---
+    ## --- Date  : 30/09/2016                                             ---
+    ## ----------------------------------------------------------------------
+
+
 # Twython reference:
 # https://twython.readthedocs.io/en/latest/index.html
 #

@@ -1,11 +1,15 @@
-/*
+ /*
     // ----------------------------------------------------------------------
-    // --- ard.ino                                                        ---
+    // --- ard_GPIO_LM35.ino                                              ---
     // ----------------------------------------------------------------------
-    // --- autoGarden main Arduino fail, to manage sensors and RPi comm.  ---
+    // --- autoGarden main Arduino file, to manage sensors and RPi comm.  ---
+    // --- RPi requirements: execute twitter_GPIO.py                      ---
+    // --- RPi comm.: GPIO (output 100ms pulse through pin 13)            ---
+    // --- Sensor: LM35d analog temperature sensor (analog pin 5)         ---
+    // --- LM35 ref: http://playground.arduino.cc/Main/LM35HigherResolution -
+    // ----------------------------------------------------------------------
     // --- Author: Jaime Martin Soler                                     ---
     // --- Date  : 27/09/2016                                             ---
-    // --- LM35 ref: http://playground.arduino.cc/Main/LM35HigherResolution -
     // ----------------------------------------------------------------------
 */
 

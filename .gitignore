@@ -47,8 +47,10 @@ Temporary Items
 .apdisk
 
 # Custom: private information
-*.private
 twitterPass.*
+twitter_pass.*
+*.private
+*.zip
 
 # Custom: Python binary files
 *.pyc
