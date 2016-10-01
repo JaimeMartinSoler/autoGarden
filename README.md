@@ -131,6 +131,7 @@ Under development.
 [circuits.io]: <https://circuits.io/circuits/2723637-autogardenr>
 [akirasan.net]: <http://www.akirasan.net/raspbpi-arduino-com-bidireccional-nrf24l01/>
 [raspberrypi.org/spi]: <https://www.raspberrypi.org/documentation/hardware/raspberrypi/spi/README.md>
+[https://github.com/tmrh20/RF24]: <https://github.com/tmrh20/RF24>
 
 
 
