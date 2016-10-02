@@ -60,19 +60,25 @@ String theMessage = "";
 char rev[50]="";
 
 void setup(void) {
-  Serial.begin(57600);
+  Serial.begin(9600);
   printf_begin();      //Debug
 
   //nRF24 configuración
   radio.begin();
-  radio.setChannel(0x4c);
+  radio.setChannel(0x4c); //original: 0x4c
   radio.setAutoAck(1);
   radio.setRetries(15,15);
   radio.setPayloadSize(32);
+  
+  radio.setDataRate(RF24_1MBPS);
+  radio.setPALevel(RF24_PA_MIN); // RF24_PA_HIGH, RF24_PA_MIN
+  //radio.setAutoAck(true);
+  //radio.enableAckPayload();
+
   radio.openReadingPipe(1,pipes[0]);
   radio.openWritingPipe(pipes[1]);
-  radio.startListening();
   radio.printDetails(); //Debug
+  radio.startListening();
 
   radio.powerUp();
 };

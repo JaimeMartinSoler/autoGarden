@@ -7,6 +7,7 @@
     ## --- autoGarden main RPi file, to manage sensors and Arduino comm.  ---
     ## --- Arduino requirements: execute ard_NRF24L01_LM35.ino            ---
     ## --- RPi comm.: NRF24L01 2.4GHz wireless transciever                ---
+	## --- tut: http://www.akirasan.net/raspbpi-arduino-com-bidireccional-nrf24l01/
     ## ----------------------------------------------------------------------
     ## --- Author: Jaime Martin Soler                                     ---
     ## --- Date  : 30/09/2016                                             ---
@@ -25,66 +26,55 @@
 
 # -------------------------------------------------------------------
 # IMPORTS
-
+from nrf24 import NRF24
 import time
-from twython import Twython, TwythonError
-# import keys and tokens (file 'twitterPass.py' is ignored in .gitignore by GitHub)
-from twitterPass import APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET
-try:
-    import RPi.GPIO as GPIO
-except RuntimeError:
-    print("Error importing RPi.GPIO, probably because you need 'sudo' privileges")
+
+pipes = [[0x65, 0x64, 0x6f, 0x4e, 0x32], [0x65, 0x64, 0x6f, 0x4e, 0x31]]
+
+radio = NRF24()
+radio.begin(0, 0, 15, 18) #Set CE and IRQ pins - Edited, original: radio.begin(0, 0, 25, 18)
+radio.setRetries(15,15)
+radio.setPayloadSize(32)
+radio.setChannel(0x4c)	# original: 0x4c
+
+radio.setDataRate(NRF24.BR_1MBPS)
+radio.setPALevel(NRF24.PA_MAX)
+#radio.setAutoAck(True)
+#radio.enableAckPayload()
+
+radio.openReadingPipe(1, pipes[1])
+radio.openWritingPipe(pipes[0])
+
+radio.printDetails()
+radio.startListening()
+radio.powerUp()
+cont=0
+
+while True:
+  pipe = [0]
+
+  while not radio.available(pipe):
+    time.sleep(0.250)
+
+  recv_buffer = []
+  radio.read(recv_buffer)
+  out = ''.join(chr(i) for i in recv_buffer)
+  print out
+
+  cont=cont+1
+  print cont
+  radio.stopListening()
+  if cont==5:
+    comando = "ON"
+    radio.stopListening()
+    print "Envio comando --- ON"
+    radio.write(comando)
+    radio.startListening()
+  if cont==10:
+    comando = "OFF"
+    radio.stopListening()
+    print "Envio comando --- OFF"
+    radio.write(comando)
+    radio.startListening()
+    cont=0
 	
-
-
-	
-# -------------------------------------------------------------------
-# TWITTER
-
-# -------------------
-# Function tweetMsg
-# 	it makes a new tweet from the twitter object and the text to tweet
-#   return: True(tweeted), False(error)
-def tweetMesg(t,txt):
-	try:
-		t.update_status(status=txt)
-		return True
-	except TwythonError as e:
-		print (e)
-		return False
-	
-# get twitter instance from keys and tokens
-twitter = Twython(APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET)
-
-
-	
-	
-# -------------------------------------------------------------------
-# GPIO
-
-# -------------------
-# Function callback_tweet(1 argument is mandatory)
-#	callback function that makes a message and tweets it
-def callback_tweet(pin):
-	print ("\npin " + str(pin) + " rising edge detected: tweet")
-	tweetText = "Termpeture is over 30 celsius!!! [" + time.strftime("%Y-%m-%d %H:%M:%S") + "]"
-	if tweetMesg(t=twitter,txt=tweetText):
-		print ("tweeted successfully:\n" + tweetText)
-
-# Twitter pin mode and setup (pull-down resistor: LOW stable value as default)
-pin_arduino = 37
-GPIO.setmode(GPIO.BOARD) 
-GPIO.setup(pin_arduino, GPIO.IN, pull_up_down=GPIO.PUD_DOWN) 
-GPIO.add_event_detect(pin_arduino, GPIO.RISING, callback=callback_tweet, bouncetime=50)
-
-# Finish pin mode and setup (pull-down resistor: LOW stable value as default)
-pin_finish = 35
-GPIO.setmode(GPIO.BOARD) 
-GPIO.setup(pin_finish, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-# wait until pin_finish is rised, to keep alive the callback 
-GPIO.wait_for_edge(pin_finish, GPIO.RISING)
-print("\npin " + str(pin_finish) + " rising edge detected: finish")
-
-# clear the configuration
-GPIO.cleanup()
-
