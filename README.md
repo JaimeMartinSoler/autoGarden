@@ -36,24 +36,24 @@ This setup is based in the instructions you can find in [invent.module143].
 **1. Enable SPI master driver and I2C**:  
 There are two ways to do this:  
   - **1.a. Enable SPI and I2C graphically from `raspi-config`**:  
-    ```sh
+    ```
     sudo raspi-config
     ```  
     and choose 'Advanced Options', 'SPI', 'Yes', and also 'Advanced Options', 'I2C', 'Yes'. Then, reboot the Raspberry Pi.  
-    ```sh
+    ```
     sudo reboot
     ```  
   - **1.b. Enable SPI and I2C manually from `/boot/config.txt`**:  
-    ```sh
+    ```
     sudo nano /boot/config.txt
     ```  
     add the following lines:  
-    ```sh
+    ```
     dtparam=spi=on
     dtparam=i2c_arm=on
     ```  
     save the changes and reboot the Raspberry Pi:  
-    ```sh
+    ```
     sudo reboot
     ```
 
