@@ -14,7 +14,7 @@ Depending on the communication interface we are using (GPIO wires, NRF24L wirele
 Take into account the following points:
 - [Arduino GPIO reference], and more.
 - [Raspberry Pi GPIO python reference].
-- Install the GPIO python library in the Raspberry Pi:
+- Install the GPIO python library in the Raspberry Pi:  
   ```sh
   sudo apt-get install python-rpi.gpio
   ```
