@@ -30,15 +30,17 @@ from nrf24 import NRF24
 import time
 
 pipes = [[0x65, 0x64, 0x6f, 0x4e, 0x32], [0x65, 0x64, 0x6f, 0x4e, 0x31]]
+#pipes = [[0xF0, 0xF0, 0xF0, 0xF0, 0xE1], [0xF0, 0xF0, 0xF0, 0xF0, 0xD2]]
+
 
 radio = NRF24()
-radio.begin(0, 0, 15, 18) #Set CE and IRQ pins - Edited, original: radio.begin(0, 0, 25, 18)
+radio.begin(0, 0, 25, 18) #Set CE and IRQ pins - Edited, original: radio.begin(0, 0, 25, 18)
 radio.setRetries(15,15)
 radio.setPayloadSize(32)
 radio.setChannel(0x4c)	# original: 0x4c
 
-radio.setDataRate(NRF24.BR_1MBPS)
-radio.setPALevel(NRF24.PA_MAX)
+radio.setDataRate(NRF24.BR_250KBPS)
+radio.setPALevel(NRF24.PA_LOW)
 #radio.setAutoAck(True)
 #radio.enableAckPayload()
 

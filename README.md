@@ -12,21 +12,59 @@ Depending on the communication interface we are using (GPIO wires, NRF24L wirele
 
 ### GPIO wired communication
 Take into account the following points:
+- [Arduino GPIO reference], and more.
+- [Raspberry Pi GPIO python reference].
+- Install the GPIO python library in the Raspberry Pi:
+    ```sh
+    sudo apt-get install python-rpi.gpio
+    ```
 - Connect any RPi_GND to any Arduino_GND with a shortcut. Otherwise the RPi will read nothing but noise.
 - Before running the RPi programm, run the Arduino programm and make the conections. Otherwise the RPi will start with a few random reads.
 
  
 
 ### NRF24L wireless 2.4GHz transciever: Arduino
-Download the following library:
-[https://github.com/tmrh20/RF24]
+- **Install the [TMRh20/RF24] library:**  
+Arduino IDE menu bar > Sketch > Include Library > Manage Libraries... > Type "RF24" in the search field > Install the "RF24 by TMRh20" library.  
+(The library can be downloaded from the repository [https://github.com/tmrh20/RF24], but the cleanest way to do it is from the Arduino IDE)
 
  
 
 ### NRF24L wireless 2.4GHz transciever: Raspberry Pi
-This setup is based in the instructions you can find in [akirasan.net] and [raspberrypi.org/spi].
+This setup is based in the instructions you can find in [invent.module143].
 
-**1. Install python, RPi.GPIO, smbus, i2c-tools:**
+**1. Enable SPI master driver and I2C**:  
+There are two ways to do this:  
+  - **1.a. Enable SPI and I2C graphically from `raspi-config`**:
+    ```sh
+    sudo raspi-config
+    ```
+    and choose 'Advanced Options', 'SPI', 'Yes', and also 'Advanced Options', 'I2C', 'Yes'. Then, reboot the Raspberry Pi.
+    ```sh
+    sudo reboot
+    ```
+  - **1.b. Enable SPI and I2C manually from `/boot/config.txt`**:
+    ```sh
+    sudo nano /boot/config.txt
+    ```
+    add the following lines:
+    ```sh
+    dtparam=spi=on
+    dtparam=i2c_arm=on
+    ```
+    save the changes and reboot the Raspberry Pi:
+    ```sh
+    sudo reboot
+    ```
+
+**Finnaly, check that `/dev/spidev0.0` and `/dev/spidev0.1` files exist**:  
+By doing this (any of the ways to enable SPI and I2C), the following 2 files should have been created, check that both files exist:
+```sh
+/dev/spidev0.0
+/dev/spidev0.1
+```
+
+**2. Install python, RPi.GPIO, smbus, i2c-tools:**
 ```sh
 sudo apt-get update
 sudo apt-get install python-dev
@@ -36,7 +74,7 @@ sudo apt-get install python-smbus
 sudo apt-get install i2c-tools
 ```
 
-**2. Edit file `/etc/modules`:** 
+**(3. Mybe not-necessary: Edit file `/etc/modules`):** 
 ```sh
 sudo nano /etc/modules
 ```
@@ -46,7 +84,7 @@ i2c-bcm2708
 i2c-dev
 ```
 
-**3. Edit file `/etc/modprobe.d/raspi-blacklist.conf`:** 
+**(4. Mybe not-necessary: Edit file `/etc/modprobe.d/raspi-blacklist.conf`):** 
 ```sh
 sudo nano /etc/modprobe.d/raspi-blacklist.conf
 ```
@@ -56,64 +94,21 @@ commenting out the following lines (adding `'#'` as first character):
 #blacklist i2c-bmc2708
 ```
 
-**4. Install library nrf24.py:** 
-```sh
-cd autoGarden/src/RPi
-wget https://raw.githubusercontent.com/jpbarraca/pynrf24/master/nrf24.py
-```
-
-**5. Install library python-spi:** 
+**5. Install library [py-spidev]:** 
 ```sh
 cd /lib
 sudo mkdir py-spidev
 cd py-spidev
-sudo wget https://raw.github.com/doceme/py-spidev/master/setup.py 
-sudo wget https://raw.github.com/doceme/py-spidev/master/spidev_module.c
-sudo touch README.md
-sudo touch CHANGELOG.md
-sudo python ./setup.py install
-```
-
-**6. Enable SPI master driver and I2C**:  
-There are two ways to do this:  
-  - **6.a. Enable SPI and I2C graphically from `raspi-config`**:
-```sh
-sudo raspi-config
-```
-and choose 'Advanced Options', 'SPI', 'Yes', and also 'Advanced Options', 'I2C', 'Yes'. Then, reboot the Raspberry Pi.
-```sh
-sudo reboot
-```
-  - **6.b. Enable SPI and I2C manually from `/boot/config.txt`**:
-```sh
-sudo nano /boot/config.txt
-```
-add the following lines:
-```sh
-dtparam=spi=on
-dtparam=i2c_arm=on
-```
-save the changes and reboot the Raspberry Pi:
-```sh
-sudo reboot
-```
-
-  - **Check that `/dev/spidev0.0` and `/dev/spidev0.0` files exist**:  
-By doing this (any of the ways to enable SPI and I2C), the following 2 files should have been created, check that both exist:
-```sh
-/dev/spidev0.0
-/dev/spidev0.1
-```
-#### Other notes:
-- **If you are getting errors with python-spi, install it this way:** 
-```sh
-cd /lib
-sudo mkdir python-spi 
-cd python-spi 
-sudo wget https://github.com/doceme/py-spidev/archive/master.zip
+sudo wget https://github.com/Gadgetoid/py-spidev/archive/master.zip
 sudo unzip master.zip
 cd py-spidev-master
-sudo python ./setup.py install
+sudo python3 setup.py install
+```
+
+**6. Install library [lib_nrf24.py]:** 
+```sh
+cd autoGarden/src/RPi
+wget https://github.com/BLavery/lib_nrf24/blob/master/lib_nrf24.py
 ```
 
  
@@ -129,9 +124,13 @@ Under development.
 
 [Automatic Garden]:  <https://github.com/JaimeMartinSoler/autoGarden>
 [circuits.io]: <https://circuits.io/circuits/2723637-autogardenr>
-[akirasan.net]: <http://www.akirasan.net/raspbpi-arduino-com-bidireccional-nrf24l01/>
-[raspberrypi.org/spi]: <https://www.raspberrypi.org/documentation/hardware/raspberrypi/spi/README.md>
+[Arduino GPIO reference]: <https://www.arduino.cc/en/Reference/HomePage>
+[Raspberry Pi GPIO python reference]: <https://sourceforge.net/p/raspberry-gpio-python/wiki/Examples/>
+[TMRh20/RF24]: <http://tmrh20.github.io/RF24/>
 [https://github.com/tmrh20/RF24]: <https://github.com/tmrh20/RF24>
+[invent.module143]: <http://invent.module143.com/daskal_tutorial/rpi-3-tutorial-14-wireless-pi-to-arduino-communication-with-nrf24l01/>
+[py-spidev]: <https://github.com/Gadgetoid/py-spidev>
+[lib_nrf24.py]: <https://github.com/BLavery/lib_nrf24>
 
 
 
@@ -139,3 +138,4 @@ Under development.
 [//]: # (.md editor: <http://dillinger.io/>)
 [//]: # (.md cheatsheet: <https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet>)
 [//]: # (Invisible character for extra line breaking " ": <http://stackoverflow.com/questions/17978720/invisible-characters-ascii>)
+[//]: # (other [unsuccessful] NRF24 tutorial: <http://www.akirasan.net/raspbpi-arduino-com-bidireccional-nrf24l01/>)
