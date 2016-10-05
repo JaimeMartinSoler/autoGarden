@@ -15,9 +15,9 @@ Take into account the following points:
 - [Arduino GPIO reference], and more.
 - [Raspberry Pi GPIO python reference].
 - Install the GPIO python library in the Raspberry Pi:
-    ```sh
-    sudo apt-get install python-rpi.gpio
-    ```
+  ```sh
+  sudo apt-get install python-rpi.gpio
+  ```
 - Connect any RPi_GND to any Arduino_GND with a shortcut. Otherwise the RPi will read nothing but noise.
 - Before running the RPi programm, run the Arduino programm and make the conections. Otherwise the RPi will start with a few random reads.
 
