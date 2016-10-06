@@ -49,20 +49,15 @@ There are two ways to do this:
     ```  
     add the following lines:  
     ```
-    dtparam=spi=on
+    dtparam=spi=on  
     dtparam=i2c_arm=on
     ```  
     save the changes and reboot the Raspberry Pi:  
     ```
     sudo reboot
-    ```
+    ```  
+Finnaly, check that `/dev/spidev0.0` and `/dev/spidev0.1` files exist. 
 
-**Finnaly, check that `/dev/spidev0.0` and `/dev/spidev0.1` files exist**:  
-By doing this (any of the ways to enable SPI and I2C), the following 2 files should have been created, check that both files exist:
-```sh
-/dev/spidev0.0
-/dev/spidev0.1
-```
 
 **2. Install python, RPi.GPIO, smbus, i2c-tools:**
 ```sh
