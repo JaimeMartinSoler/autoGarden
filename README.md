@@ -44,19 +44,13 @@ There are two ways to do this:
     sudo reboot
     ```  
   - **1.b. Enable SPI and I2C manually from `/boot/config.txt`**:  
-    ```
-    sudo nano /boot/config.txt
-    ```  
+    `sudo nano /boot/config.txt`  
     add the following lines:  
-    ```
-    dtparam=spi=on  
-    dtparam=i2c_arm=on
-    ```  
+    `dtparam=spi=on`  
+    `dtparam=i2c_arm=on`  
     save the changes and reboot the Raspberry Pi:  
-    ```
-    sudo reboot
-    ```  
-Finnaly, check that `/dev/spidev0.0` and `/dev/spidev0.1` files exist. 
+    `sudo reboot`  
+Finnaly, check that `/dev/spidev0.0` and `/dev/spidev0.1` files exist.  
 
 
 **2. Install python, RPi.GPIO, smbus, i2c-tools:**
