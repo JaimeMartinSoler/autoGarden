@@ -48,6 +48,7 @@ There are two ways to do this:
     `dtparam=i2c_arm=on`  
     save the changes and reboot the Raspberry Pi:  
     `sudo reboot`  
+    
 Finnaly, check that `/dev/spidev0.0` and `/dev/spidev0.1` files exist.  
 
 
