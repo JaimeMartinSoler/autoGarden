@@ -1,42 +1,164 @@
 // http://invent.module143.com/daskal_tutorial/rpi-3-tutorial-14-wireless-pi-to-arduino-communication-with-nrf24l01/
 
-// includes
-#include<SPI.h>
-#include<RF24.h>
- 
-// ce, csn pins
-RF24 radio(9, 10);
 
-// setup
-void setup(void){
-  radio.begin();
-  radio.setPALevel(RF24_PA_MAX);
-  radio.setChannel(0x76);
-  radio.openWritingPipe(0xF0F0F0F0E1LL);
-  radio.enableDynamicPayloads();
-  radio.powerUp();
-}
+
+
+// --------------------------------------------------------------
+// INCLUDES
+#include <SPI.h>
+#include <RF24.h>
+
+
+
+
+// --------------------------------------------------------------
+// PARAMETERS
+
+// NRF24L01 communication
+const short int PIPE_R = 0;
+const short int PIPE_W = 1;
+const uint64_t pipes[2] = {0xE8E8F0F0E1LL, 0xF0F0F0F0E1LL};
+short int role;
+const short int ROLE_TX = 0;
+const short int ROLE_RX = 1;
+const short int PAYLOAD_MAX_SIZE = 32;      // defined by NRF24 datasheet
+const short int PAYLOAD_ACK_MAX_SIZE = 32;  // defined by NRF24 datasheet
+
+// NRF24L01 pins: CE, CSN
+const short int PIN_CE = 9;
+const short int PIN_CSN = 10;
+RF24 radio(PIN_CE, PIN_CSN);
+
+// Message RX
+const short int charMsgRxSize = PAYLOAD_MAX_SIZE;
+char charMsgRx[charMsgRxSize];
+String strMsgRx;
+// Message TX
+const short int charMsgTxSize = PAYLOAD_MAX_SIZE;
+char charMsgTx[charMsgTxSize];
+String strMsgTx;
+// ACK RX
+const short int charAckRxSize = PAYLOAD_ACK_MAX_SIZE;
+char charAckRx[charAckRxSize];
+String strAckRx;
+// ACK TX
+const short int charAckTxSize = PAYLOAD_ACK_MAX_SIZE;
+char charAckTx[charAckTxSize];
+String strAckTx;
+
+// LM35 pins and tempC
+const short int PIN_ANALOG_IN_LM35 = 5;
+float tempC;
 
 // iter parameters
-int iIter=0;
-char cIter[4];
-String sIter="";
-char text[128] = "\nI love you Natalia ";
+const bool SERIAL_ON = true;
+int loop_iter=0;
 
-// loop
+
+
+
+// --------------------------------------------------------------
+// SETUP
+void setup(void){
+  
+  // serial
+  if (SERIAL_ON) {Serial.begin(115200);}
+  
+  // LM35 setup (see LM35 ref: http://playground.arduino.cc/Main/LM35HigherResolution)
+  analogReference(INTERNAL);
+
+  // NRF24L01 setup
+  radio.begin();
+  // message and ACK
+  radio.setPayloadSize(PAYLOAD_MAX_SIZE);
+  radio.enableDynamicPayloads();    // instead of: radio.setPayloadSize(int);
+  radio.setAutoAck(true);
+  radio.enableAckPayload();
+  radio.setRetries(1,15);           // min ms between retries, max number of retries
+  // channel and pipes
+  radio.setChannel(0x76);
+  radio.openReadingPipe(1, pipes[PIPE_R]);
+  radio.openWritingPipe(pipes[PIPE_W]);
+  // rate, power
+  radio.setDataRate(RF24_1MBPS);  // with RF24_250KBPS <10% success...
+  radio.setPALevel(RF24_PA_MIN);
+  //radio.powerUp();
+  // role
+  role = ROLE_TX;
+  // print details (printf_begin();)
+  //radio.printDetails();
+}
+
+
+
+
+// --------------------------------------------------------------
+// LOOP
 void loop(void){
   
-  // create text message
-  char msg[128];
-  strncpy(text,msg,sizeof(msg));
-  sIter = String(iIter++);
-  sIter.toCharArray(cIter,sizeof(cIter));
-  strcat(text,cIter);
-  
-  // send message
-  radio.write(&text, sizeof(text));
+  // 123456789_123456789_123456789_-2-456789_123456789_ - STRING_LENGTH_RULER
 
+  // role == ROLE_TX
+  if (role == ROLE_TX) { 
+    radio.stopListening();
+    
+    // get temperature in celsius [tempF = (tempC * 1.8) + 32]
+    tempC = analogRead(PIN_ANALOG_IN_LM35) / 9.31;
+    
+    // create message
+    strMsgTx = "Tem=" + String(tempC) + ", iter=" + String(loop_iter++);
+    strMsgTx.toCharArray(charMsgTx, min(strMsgTx.length()+1,charMsgTxSize));
+    
+    // TX message
+    if(SERIAL_ON) {Serial.print("\nTX: \""); Serial.print(strMsgTx);Serial.println("\"");}
+    // No ACK received:
+    if (!radio.write(&charMsgTx, sizeof(charMsgTx))){
+      if(SERIAL_ON) {Serial.println("  ACK_RX: NO");}
+      
+    // ACK_RX: 
+    } else {
+      // ACK_RX (ACK payload OK):
+      if (radio.isAckPayloadAvailable()) {
+        radio.read(&charAckRx, sizeof(charAckRx));
+        strAckRx = String(charAckRx);
+        if(SERIAL_ON) {Serial.print("  ACK_RX: YES\n  ACK_RX_payload: \"");Serial.print(strAckRx);Serial.println("\"");}
+      // ACK_RX (ACK payload <empty>): 
+      } else {
+        if(SERIAL_ON) {Serial.println("  ACK_RX: YES\n  ACK_RX_payload: <empty>");}
+      }
+    }
+  }
+  
+  // role == ROLE_RX
+  else if (role == ROLE_RX) { 
+    radio.startListening();
+
+    unsigned long millisBeg = millis();
+    unsigned long millisEnd;
+
+    // wait for a message
+    while(!radio.available()) {
+      delay(10);
+    }
+
+    // RX message
+    radio.read(&charMsgRx, sizeof(charMsgRx));
+    strMsgRx = String(charMsgRx);
+    if(SERIAL_ON) {Serial.print("\nRX: \"");Serial.print(strMsgRx);Serial.println("\"");}
+
+    // ACK_TX payload
+    strAckTx = "ACK from Arduino";
+    strAckTx.toCharArray(charAckTx, min(strAckTx.length()+1,charAckTxSize));
+    if(SERIAL_ON) {Serial.print("  ACK_TX_payload: \"");Serial.print(strAckTx);Serial.println("\"");}
+    delay(10);  // without this delay, RX misses ACK_payload (although RX catches ACK anyway)
+    millisEnd = millis();
+    radio.writeAckPayload(1, charAckTx, sizeof(charAckTx));
+    Serial.print(millisEnd-millisBeg);
+  }
+  
   // delay
   delay(1000);
 }
+
+
 
