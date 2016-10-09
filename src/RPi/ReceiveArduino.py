@@ -91,7 +91,7 @@ radio.begin(SPIDEV_FILE, PIN_CE_BCM)
 radio.setPayloadSize(PAYLOAD_MAX_SIZE)
 radio.enableDynamicPayloads()	# instead of: radio.setPayloadSize(int)
 radio.setAutoAck(True)
-radio.enableDynamicPayloads()
+radio.enableAckPayload()
 radio.setRetries(1,15);         # min ms between retries, max number of retries
 # channel and pipes
 radio.setChannel(0x76)
@@ -106,7 +106,7 @@ radio.startListening()
 # role
 role = ROLE_RX
  
- 
+
  
  
 # --------------------------------------------------------------
@@ -122,16 +122,18 @@ while(True):
 		while (not radio.available()):
 			time.sleep(0.010)
 			
+		# ACK_TX payload before RX
+		# issue!!!: ACK payload is getting delayed by 1 (ACK_RX[i]=ACK_TX[i-1]), but this does not affect to a normal ACK
+		strAckTx = 'ACK to Temp from RPi'
+		intAckTx = stringToIntArray(strAckTx)
+		radio.writeAckPayload(1, intAckTx, len(intAckTx))
+		
 		# RX the message
 		radio.read(intMsgRx, radio.getDynamicPayloadSize())
 		strMsgRx = intArrayToString(intMsgRx)
 		print("\nRX: \"{}\"".format(strMsgRx))
-		
-		# ACK_TX payload
-		strAckTx = 'ACK to Temp from RPi'
-		intAckTx = stringToIntArray(strAckTx)
 		print("  ACK_TX_payload: \"{}\"".format(strAckTx))
-		radio.writeAckPayload(1, intAckTx, len(intAckTx))
+		
 		
 	# role == ROLE_TX
 	elif (role == ROLE_TX):
@@ -147,8 +149,10 @@ while(True):
 			print("  ACK_RX: NO")
 		
 		# ACK_RX:
+		# issue!!!: when a row of msg is read, after TX stops, RX keeps reading ACKs for 2-3 times
 		else:
 			# ACK_RX (ACK payload OK):
+			# issue!!!: ACK payload is getting delayed by 1 (ACK_RX[i]=ACK_TX[i-1]), but this does not affect to a normal ACK
 			if (radio.isAckPayloadAvailable()):
 				radio.read(intAckRx, radio.getDynamicPayloadSize())
 				strAckRx = intArrayToString(intAckRx)
@@ -156,6 +160,6 @@ while(True):
 			# ACK_RX (ACK payload <empty>): 
 			else:
 				print ("  ACK_RX: YES\n  ACK_RX_payload: <empty>")
+		# delay
+		time.sleep(1)
 	
-	# delay
-	time.sleep(1)	

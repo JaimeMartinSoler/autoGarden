@@ -98,8 +98,30 @@ void loop(void){
   
   // 123456789_123456789_123456789_-2-456789_123456789_ - STRING_LENGTH_RULER
 
+  // role == ROLE_RX
+  if (role == ROLE_RX) { 
+    radio.startListening();
+
+    // wait for a message
+    while(!radio.available()) {
+      delay(10);
+    }
+
+    // ACK_TX payload before RX
+    // issue!!!: ACK payload is getting delayed by 1 (ACK_RX[i]=ACK_TX[i-1]), but this does not affect to a normal ACK
+    strAckTx = "ACK from Arduino";
+    strAckTx.toCharArray(charAckTx, min(strAckTx.length()+1,charAckTxSize));
+    radio.writeAckPayload(1, charAckTx, sizeof(charAckTx));
+    
+    // RX message
+    radio.read(&charMsgRx, sizeof(charMsgRx));
+    strMsgRx = String(charMsgRx);
+    if(SERIAL_ON) {Serial.print("\nRX: \"");Serial.print(strMsgRx);Serial.println("\"");}
+    if(SERIAL_ON) {Serial.print("  ACK_TX_payload: \"");Serial.print(strAckTx);Serial.println("\"");}
+  }
+  
   // role == ROLE_TX
-  if (role == ROLE_TX) { 
+  else if (role == ROLE_TX) { 
     radio.stopListening();
     
     // get temperature in celsius [tempF = (tempC * 1.8) + 32]
@@ -115,9 +137,11 @@ void loop(void){
     if (!radio.write(&charMsgTx, sizeof(charMsgTx))){
       if(SERIAL_ON) {Serial.println("  ACK_RX: NO");}
       
-    // ACK_RX: 
+    // ACK_RX:
+    // issue!!!: when a row of msg is read, after TX stops, RX keeps reading ACKs for 2-3 times
     } else {
       // ACK_RX (ACK payload OK):
+      // issue!!!: ACK payload is getting delayed by 1 (ACK_RX[i]=ACK_TX[i-1]), but this does not affect to a normal ACK
       if (radio.isAckPayloadAvailable()) {
         radio.read(&charAckRx, sizeof(charAckRx));
         strAckRx = String(charAckRx);
@@ -127,37 +151,9 @@ void loop(void){
         if(SERIAL_ON) {Serial.println("  ACK_RX: YES\n  ACK_RX_payload: <empty>");}
       }
     }
+    // delay
+    delay(1000);
   }
-  
-  // role == ROLE_RX
-  else if (role == ROLE_RX) { 
-    radio.startListening();
-
-    unsigned long millisBeg = millis();
-    unsigned long millisEnd;
-
-    // wait for a message
-    while(!radio.available()) {
-      delay(10);
-    }
-
-    // RX message
-    radio.read(&charMsgRx, sizeof(charMsgRx));
-    strMsgRx = String(charMsgRx);
-    if(SERIAL_ON) {Serial.print("\nRX: \"");Serial.print(strMsgRx);Serial.println("\"");}
-
-    // ACK_TX payload
-    strAckTx = "ACK from Arduino";
-    strAckTx.toCharArray(charAckTx, min(strAckTx.length()+1,charAckTxSize));
-    if(SERIAL_ON) {Serial.print("  ACK_TX_payload: \"");Serial.print(strAckTx);Serial.println("\"");}
-    delay(10);  // without this delay, RX misses ACK_payload (although RX catches ACK anyway)
-    millisEnd = millis();
-    radio.writeAckPayload(1, charAckTx, sizeof(charAckTx));
-    Serial.print(millisEnd-millisBeg);
-  }
-  
-  // delay
-  delay(1000);
 }
 
 
