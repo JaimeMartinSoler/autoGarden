@@ -11,42 +11,109 @@
 // ----------------------------------------------------------------------
 // INCLUDES
 #include "action.h"
+#include "log.h"
+#include "helper.h"
 
 
 
 
 // ----------------------------------------------------------------------
-// CONSTRUCTORS
-
+// CONSTRUCTORS (they just call the setters)
 
 // Constructor: Default
-Action::Action()
+Action::Action() {
+  set();
+}
+
+// Constructor: Copy
+Action::Action(Action &action) {
+  set(action);
+}
+
+// Constructor: All Params
+Action::Action(String id, String txBoardId, String rxBoardId, String mode, String title, short int paramNum, String param[], bool validated = false, int txSuccess = 0, int txAttempts = 0, bool forceValidation = true){
+  set(id, txBoardId, rxBoardId, mode, title, paramNum, param, validated, txSuccess, txAttempts, forceValidation);
+}
+
+// Constructor: Main
+Action::Action(String strAction){
+  set(strAction);
+}
+
+
+
+
+// ----------------------------------------------------------------------
+// SETTERS
+
+// Set: Default
+void Action::set()
 {
+  // Parameters Payload
   this->id = "";
-  this->boardId = "0";
+  this->txBoardId = "";
+  this->rxBoardId = "";
   this->mode = "";
   this->title = "";
   this->paramNum = 0;
   //this->param = null; // error: 'null' was not declared in this scope
+    
+  // Parameters TX
   this->validated = false;
+  this->txSuccess = 0;
+  this->txAttempts = 0;
 }
 
 
-// Constructor: All Params
-Action::Action(String id, String boardId, String mode, String title, short int paramNum, String param[])
+// Set: Copy
+void Action::set(Action &action)
 {
+  // Parameters Payload
+  this->id = action.id;
+  this->txBoardId = action.txBoardId;
+  this->rxBoardId = action.rxBoardId;
+  this->mode = action.mode;
+  this->title = action.title;
+  this->paramNum = action.paramNum;
+  this->param = new String[this->paramNum];
+  for (int i=0; i<this->paramNum; i++)
+    this->param[i] = action.param[i];
+    
+  // Parameters TX
+  this->validated = action.validated;
+  this->txSuccess = action.txSuccess;
+  this->txAttempts = action.txAttempts;
+}
+
+
+// Set: All Params
+void Action::set(String id, String txBoardId, String rxBoardId, String mode, String title, short int paramNum, String param[], bool validated = false, int txSuccess = 0, int txAttempts = 0, bool forceValidation = true)
+{
+  // Parameters Payload
   this->id = id;
-  this->boardId = boardId;
+  this->txBoardId = txBoardId;
+  this->rxBoardId = rxBoardId;
   this->mode = mode;
   this->title = title;
   this->paramNum = paramNum;
   this->param = new String[this->paramNum];
-  validate();
+  for (int i=0; i<this->paramNum; i++)
+    this->param[i] = param[i];
+  // Parameters TX
+  if (forceValidation)
+    validate(); // this manages param validate
+  else
+    this->validated = validated;
+  this->txSuccess = txSuccess;
+  this->txAttempts = txAttempts;
 }
 
-// Constructor: Main
-Action::Action(String strAction)
+
+// Set: Main
+void Action::set(String strAction)
 {
+  // Parameters Payload
+  
   // get all the fields from strAction (comma separated values)
   const short int maxFieldsSize = 32;
   String fields[maxFieldsSize];
@@ -62,11 +129,12 @@ Action::Action(String strAction)
   fields[fieldsSize++] = strAction.substring(charIdx0+1, strAction.length());
   
   // fill the paramters
-  const int fixedFields = 4;
+  const int fixedFields = 5;
   this->id = fields[0];
-  this->boardId = fields[1];
-  this->mode = fields[2];
-  this->title = fields[3];
+  this->txBoardId = fields[1];
+  this->rxBoardId = fields[2];
+  this->mode = fields[3];
+  this->title = fields[4];
   this->paramNum = fieldsSize - fixedFields;
   if (this->paramNum > 0) {
     this->param = new String[this->paramNum];
@@ -74,8 +142,10 @@ Action::Action(String strAction)
       param[p] = fields[p+fixedFields];
   }
 
-  // validate
+  // Parameters TX
   validate();
+  this->txSuccess = 0;
+  this->txAttempts = 0;
 }
 
 
@@ -91,35 +161,11 @@ Action::~Action()
 // ----------------------------------------------------------------------
 // FUNCTIONS
 
-// exec()
-bool Action::exec()
-{
-  if (!validated)
-    return false;
-  if (strEq(title,"GET"))
-  {
-    // TODO
-  }
-  return true;
-}
-
-
-// tx()
-bool Action::tx()
-{
-  if (!validated)
-    return false;
-    
-    // TODO
-    
-  return true;
-}
-
 
 // toString()
 String Action::toString()
 {
-  String str = id + "," + boardId + "," + mode + "," + title;
+  String str = id + "," + txBoardId + "," + rxBoardId + "," + mode + "," + title;
   for (int i=0; i<paramNum; i++) {
     str += "," + param[i];
   }
@@ -130,14 +176,15 @@ String Action::toString()
 // validate()
 bool Action::validate()
 {
-  int intId = idToInt(id);
+  long int intId = idToInt(id);
   String toStr = toString();
   if (
     (toStr.length() > MAX_MESSAGE_SIZE) ||
     (id.length()!=ID_SIZE) || (intId<0) || (intId>ID_MAX) ||
-    (boardId.length() < 1) || (!strEq(boardId,BOARD_ID)) ||
+    (rxBoardId.length() < 1) || (!strEq(txBoardId,BOARD_ID) && !strEq(rxBoardId,BOARD_ID)) ||
     (mode.length() < 1) ||
     (title.length() < 1) ) {
+      LOG(LOG_WAR, "Action: \"" + toStr + "\" not validated");
       validated = false;
   } else {
     validated = true;
@@ -149,7 +196,8 @@ bool Action::validate()
 // idAdd(String strId, int addition)
 String Action::idAdd(String strId, int addition)
 {
-  int intId = idToInt(strId);
+  long int intId = idToInt(strId);
+  LOG(LOG_DEB, "intId = " + String(intId));
   if (intId < 0) { return "X";}
   intId += addition;
   if (intId < 0) {
@@ -162,26 +210,28 @@ String Action::idAdd(String strId, int addition)
 
 
 // idToInt(String strId)
-int Action::idToInt(String strId)
+long int Action::idToInt(String strId)
 {
   int v = 0;
-  int intId = 0;
+  long int intId = 0;
   if (strId.length() != ID_SIZE) {return -1;}
   for(int i=0; i<ID_SIZE; i++) {
     v = (int)strId.charAt(i) - ASCII_PRINT_MIN;
     if ((v < 0) || (v > ASCII_PRINT_RANGE)) { return -1; }
-    intId += pow(v, ID_SIZE-i);
+    intId += (v * powInt(ASCII_PRINT_RANGE, ID_SIZE-i-1));
+    //LOG(LOG_DEB, "v * powInt() = " + String(v * powInt(ASCII_PRINT_RANGE, ID_SIZE-i-1)));
   }
   return intId;
 }
 
 
 // intToId(int intId)
-String Action::intToId(int intId)
+String Action::intToId(long int intId)
 {
+  // TODO: DEBUG
   String strId = "";
-  int divisor = 0;
-  int remain = intId;
+  long int divisor = 0;
+  long int remain = intId;
   if ((intId < 0) || (intId > ID_MAX)) { return "X"; }
   for (int expon=(ID_SIZE-1); expon>=0; expon--) {
     divisor = powInt(ASCII_PRINT_RANGE,expon);
@@ -191,22 +241,5 @@ String Action::intToId(int intId)
   return strId;
 }
 
-
-// powInt(int base, int exponent)
-int Action::powInt(int base, int exponent)
-{
-  int value = 1;
-  for (int i=0; i<exponent; i++) {
-    value *= value;
-  }
-  return value;
-}
-
-
-// strEq(String str0, String str1)
-bool Action::strEq(String str0, String str1)
-{
-  return (strcmp(str0.c_str(),str1.c_str()) == 0);
-}
 
 

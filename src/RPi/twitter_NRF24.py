@@ -145,7 +145,7 @@ while(True):
 	radio.stopListening()
 	
 	# create message
-	strMsgTx = "GET,TEMP";
+	strMsgTx = "ABC,R0,A0,UN,GET,TEMP,0";
 	intMsgTx = stringToIntArray(strMsgTx)
 	
 	# TX message
