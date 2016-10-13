@@ -14,18 +14,20 @@
 // ----------------------------------------------------------------------
 // INCLUDES
 
+#include <RF24.h>
 #include "rxtx.h"
 #include "config.h"
-#include "action.h"
-#include "helper.h"
 #include "log.h"
-#include <RF24.h>
+#include "helper.h"
+#include "action.h"
+#include "sensors.h"
 
 
 
 
 // ----------------------------------------------------------------------
 // PARAMETERS (static parameters need to be initialized in the .cpp file)
+
 // Generated Actions
 const float RXTX::GA_TEMP_MAX = 40.00;
 const unsigned long RXTX::GA_TEMP_MAX_ACTION_INTERVAL = 600000;
@@ -38,10 +40,11 @@ unsigned long RXTX::ga_temp_max_action_last = 0;
 // FUNCTIONS
 
 
-// rx(RF24,rxLoop=false)
+// rx(&RF24, rxLoop=false)
 // Receive and manage radio message, creating and executing the necessary Actions
 // return: true(rx success), false(rx failed)
-bool RXTX::rx(RF24 &radio, bool rxLoop = false)
+bool RXTX::rx(RF24 &radio, bool rxLoop)
+// defaults: (bool rxLoop = false)
 {
   // rx loop (if !rxLoop it breaks at the bottom)
   while(true) {
@@ -69,7 +72,7 @@ bool RXTX::rx(RF24 &radio, bool rxLoop = false)
     radio.writeAckPayload(1, charAckTX, sizeof(charAckTX));
     
     // RX message
-    char charMsgRX[MAX_MESSAGE_SIZE];
+    char charMsgRX[PAYLOAD_MAX_SIZE];
     radio.read(&charMsgRX, sizeof(charMsgRX));
     String strMsgRX = String(charMsgRX);
     LOG(LOG_INF, "RX: \"" + strMsgRX + "\"");
@@ -92,7 +95,7 @@ bool RXTX::rx(RF24 &radio, bool rxLoop = false)
 }
 
 
-// tx(RF24, Action)
+// tx(&RF24, &Action)
 // Transmit the passed Action
 // return: true(ACK_RX), false(NO_ACK_RX)
 bool RXTX::tx(RF24 &radio, Action &action)
@@ -128,7 +131,7 @@ bool RXTX::tx(RF24 &radio, Action &action)
     // ACK_RX (ACK payload OK):
     // issue!!!: ACK payload is getting delayed by 1 (ACK_RX[i]=ACK_TX[i-1]), but this does not affect to a normal ACK
     if (radio.isAckPayloadAvailable()) {
-      char charAckRX[MAX_MESSAGE_SIZE];
+      char charAckRX[PAYLOAD_MAX_SIZE];
       radio.read(&charAckRX, sizeof(charAckRX));
       String strAckRX = String(charAckRX);
       LOG(LOG_INF, "  ACK_RX: YES\n  ACK_RX_payload: \"" + strAckRX + "\"");
@@ -143,12 +146,12 @@ bool RXTX::tx(RF24 &radio, Action &action)
 }
 
 
-// exec(RF24,Action)
+// exec(&RF24,&Action)
 // Execute and Action, both received and meant to be transmitted
 // return: true(exec success), false(exec failed)
 bool RXTX::exec(RF24 &radio, Action &action)
 {
-  LOG(LOG_INF, "  Action to execute: \"" + action.toString() + "\"");
+  LOG(LOG_DET, "  Action to execute: \"" + action.toString() + "\"");
   
   // check action.validated
   if (!action.validated) {
@@ -165,7 +168,7 @@ bool RXTX::exec(RF24 &radio, Action &action)
         
         // "III,TT,<AO>,MM,<GET>,<T/TEMP>,<0>"
         if((strEq(action.param[0],"T") || strEq(action.param[0],"TEMP")) && strEq(action.param[1],"0")) {
-          float tempC = analogRead(PIN_ANALOG_IN_LM35) / 9.31;
+          float tempC = Sensors::getTempLM35();
           LOG(LOG_INF, "  Action to execute: \"" + action.toString() + "\" successfully executed");
           Action txAction("XYZ," + String(BOARD_ID) + ",R0,UN,SET,TEMP,0,"+String(tempC));
           exec(radio, txAction);
@@ -183,12 +186,12 @@ bool RXTX::exec(RF24 &radio, Action &action)
     }
   }
   
-  LOG(LOG_INF, "  Action to execute: \"" + action.toString() + "\" was NOT successfully executed");
+  LOG(LOG_WAR, "  Action to execute: \"" + action.toString() + "\" was NOT successfully executed");
   return false;
 }
 
 
-// generateAction()
+// generateAction(&Action)
 // Checks the status of the sensors and autonomously generates and Action, if needed
 // This function is meant to be executed in the RX wait loop every few milliseconds
 // return: true(action generated), false(no action generated)
@@ -196,8 +199,8 @@ bool RXTX::generateAction(Action &action)
 {
   // Check Temperature
   if (millis() - ga_temp_max_action_last >= GA_TEMP_MAX_ACTION_INTERVAL) {
-    // get temperature in celsius [tempF = (tempC * 1.8) + 32]
-    float tempC = analogRead(PIN_ANALOG_IN_LM35) / 9.31;
+    // get temperature in celsius
+    float tempC = Sensors::getTempLM35();
     if (tempC >= GA_TEMP_MAX) {
       ga_temp_max_action_last = millis();
       action.set("000,R0,UN,SET,TEMP,0,"+String(tempC)+",UA");

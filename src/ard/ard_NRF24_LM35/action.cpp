@@ -1,6 +1,6 @@
 /*
     // ----------------------------------------------------------------------
-    // --- action.h                                                       ---
+    // --- action.cpp                                                     ---
     // ----------------------------------------------------------------------
     // --- Action objects, to manage RX/TX messages, meant for NRF24L01   ---
     // ----------------------------------------------------------------------
@@ -13,6 +13,7 @@
 // ----------------------------------------------------------------------
 // INCLUDES
 #include "action.h"
+#include "config.h"
 #include "log.h"
 #include "helper.h"
 
@@ -23,7 +24,7 @@
 // CONSTRUCTORS (they just call the setters)
 
 // Constructor: Default
-Action::Action() {
+Action::Action(){
   set();
 }
 
@@ -33,8 +34,9 @@ Action::Action(Action &action) {
 }
 
 // Constructor: All Params
-Action::Action(String id, String txBoardId, String rxBoardId, String mode, String title, short int paramNum, String param[], bool validated = false, int txSuccess = 0, int txAttempts = 0, bool forceValidation = true){
-  set(id, txBoardId, rxBoardId, mode, title, paramNum, param, validated, txSuccess, txAttempts, forceValidation);
+Action::Action(String id, String txBoardId, String rxBoardId, String mode, String title, short int paramNum, String param[], String toStr, bool validated, int txSuccess, int txAttempts, bool forceValidation){
+// defaults: (String toStr="", bool validated = false, int txSuccess = 0, int txAttempts = 0, bool forceValidation = true)
+  set(id, txBoardId, rxBoardId, mode, title, paramNum, param, toStr, validated, txSuccess, txAttempts, forceValidation);
 }
 
 // Constructor: Main
@@ -60,6 +62,9 @@ void Action::set()
   this->paramNum = 0;
   //this->param = null; // error: 'null' was not declared in this scope
     
+  // Parameters toStr
+  this->toStr = "";
+  
   // Parameters TX
   this->validated = false;
   this->txSuccess = 0;
@@ -81,6 +86,9 @@ void Action::set(Action &action)
   for (int i=0; i<this->paramNum; i++)
     this->param[i] = action.param[i];
     
+  // Parameters toStr
+  this->toStr = action.toStr;
+  
   // Parameters TX
   this->validated = action.validated;
   this->txSuccess = action.txSuccess;
@@ -89,7 +97,8 @@ void Action::set(Action &action)
 
 
 // Set: All Params
-void Action::set(String id, String txBoardId, String rxBoardId, String mode, String title, short int paramNum, String param[], bool validated = false, int txSuccess = 0, int txAttempts = 0, bool forceValidation = true)
+void Action::set(String id, String txBoardId, String rxBoardId, String mode, String title, short int paramNum, String param[], String toStr, bool validated, int txSuccess, int txAttempts, bool forceValidation)
+// // defaults: (String toStr="", bool validated = false, int txSuccess = 0, int txAttempts = 0, bool forceValidation = true)
 {
   // Parameters Payload
   this->id = id;
@@ -101,6 +110,10 @@ void Action::set(String id, String txBoardId, String rxBoardId, String mode, Str
   this->param = new String[this->paramNum];
   for (int i=0; i<this->paramNum; i++)
     this->param[i] = param[i];
+
+  // Parameters toStr
+  toString(true); // it sets this->toStr
+    
   // Parameters TX
   if (forceValidation)
     validate(); // this manages param validate
@@ -144,6 +157,9 @@ void Action::set(String strAction)
       param[p] = fields[p+fixedFields];
   }
 
+  // Parameters toStr
+  toString(true); // it sets this->toStr
+  
   // Parameters TX
   validate();
   this->txSuccess = 0;
@@ -164,15 +180,24 @@ Action::~Action()
 // FUNCTIONS
 
 
-// toString()
+// toString(bool)
 // from all the Action parameters, it builds the String meant to be transmitted.
-String Action::toString()
+// Note that if we create an Action, and we change manually a paramter,
+// that chang would take no effect in toString()=this->toStr, until we call toString(true).
+String Action::toString(bool forceGeneration)
+// defaults: (bool forceGeneration = false)
 {
-  String str = id + "," + txBoardId + "," + rxBoardId + "," + mode + "," + title;
-  for (int i=0; i<paramNum; i++) {
-    str += "," + param[i];
+  // if(forceGeneration): Generate this->toStr from the parameters
+  if (forceGeneration) {
+    String str = id + "," + txBoardId + "," + rxBoardId + "," + mode + "," + title;
+    for (int i=0; i<paramNum; i++) {
+      str += "," + param[i];
+    }
+    this->toStr = str;
   }
-  return str;
+  
+  // else (and in any case): return the this->toStr parameter
+  return this->toStr;
 }
 
 
@@ -182,19 +207,30 @@ String Action::toString()
 bool Action::validate()
 {
   long int intId = idToInt(id);
-  String toStr = toString();
+  String toStrText = toString();
   if (
-    (toStr.length() > MAX_MESSAGE_SIZE) ||
+    (toStrText.length() > PAYLOAD_MAX_SIZE) ||
     (id.length()!=ID_SIZE) || (intId<0) || (intId>ID_MAX) ||
     (rxBoardId.length() < 1) || (!strEq(txBoardId,BOARD_ID) && !strEq(rxBoardId,BOARD_ID)) ||
     (mode.length() < 1) ||
     (title.length() < 1) ) {
-      LOG(LOG_WAR, "Action: \"" + toStr + "\" not validated");
+      LOG(LOG_WAR, "Action: \"" + toStrText + "\" not validated");
       validated = false;
   } else {
     validated = true;
   }
   return validated;
+}
+
+
+// idAdd(int)
+// non-static version of static idAdd(String, int)
+String Action::idAdd(int addition)
+{
+  this->id = idAdd(this->id, addition);
+
+  // force generate this->toStr
+  toString(true);
 }
 
 
@@ -236,8 +272,7 @@ long int Action::idToInt(String strId)
 }
 
 
-// intToId(int)
-// idToInt(String strId)
+// intToId(long int)
 // return: it gets the String equivalent to the int intId.
 // (i.e.: idToInt(0)->"!!!", idAdd(285888)->"ABC", idAdd(830583)->"~~~")
 String Action::intToId(long int intId)

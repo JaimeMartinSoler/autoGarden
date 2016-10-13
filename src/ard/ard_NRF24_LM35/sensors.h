@@ -1,17 +1,17 @@
 /*
     // ----------------------------------------------------------------------
-    // --- rxtx.h                                                         ---
+    // --- sensors.h                                                      ---
     // ----------------------------------------------------------------------
-    // --- High level static functions to deal with RX, TX and also       ---
-    // --- generation and execution of received actions                   ---
+    // --- High level management of sensors and NRF24L01 setup            ---
     // ----------------------------------------------------------------------
     // --- Author: Jaime Martin Soler                                     ---
     // --- Date  : 2016-10-13                                             ---
     // ----------------------------------------------------------------------
 */
 
-#ifndef RXTX_H
-#define RXTX_H
+
+#ifndef SENSORS_H
+#define SENSORS_H
 
 #if ARDUINO >= 100
   #include "Arduino.h"
@@ -19,31 +19,26 @@
   #include "WProgram.h"
 #endif
 
+
 // ----------------------------------------------------------------------
 // INCLUDES
 #include <RF24.h>
-#include "action.h"
 
 
-
-class RXTX
+class Sensors
 {
+    // config.h: check for sensors pins
+  
     // ----------------------------------------------------------------------
-    // PARAMETERS (static parameters need to be initialized in the .cpp file)
-    // Generated Actions
-    private:
-      static const float GA_TEMP_MAX;
-      static const unsigned long GA_TEMP_MAX_ACTION_INTERVAL;
-      static unsigned long ga_temp_max_action_last;
-
+    // SETUP FUNCTIONS
+    public:
+      static void setupAll(RF24 &_radio);
+      static void setupNRF24(RF24 &_radio);
+      static void setupLM35();
     // ----------------------------------------------------------------------
     // FUNCTIONS
     public:
-      static bool rx(RF24 &radio, bool rxLoop = false);
-      static bool tx(RF24 &radio, Action &action);
-      static bool exec(RF24 &radio, Action &action);
-    private:
-      static bool generateAction(Action &action);
+      static float getTempLM35();
 };
 
 #endif

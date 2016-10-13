@@ -31,7 +31,8 @@
 #define LOG_OFF 6   // off
 
 // LOG_LEVEL
-#define LOG_LVL LOG_INF // the current log level
+#define LOG_LVL LOG_INF                 // the current log level
+const long int LOG_BAUDRATE = 115200;   // 9600, 57600, 115200
 
 // Flush and delay
 #define LOG_FLUSH_ENABLE 1  // allow Serial.flush(); in every LOG() call
@@ -43,6 +44,7 @@
 // ----------------------------------------------------------------------
 // FUNCTIONS
 
+bool LOG_BEGIN(unsigned short int logLevel = LOG_LVL, long int baudRate = LOG_BAUDRATE);
 bool LOG(unsigned short int logLevel, String logText);
 bool LOG_noln(unsigned short int logLevel, String logText) ;
 

@@ -20,17 +20,7 @@
 
 // ----------------------------------------------------------------------
 // DEFINES --------------------------------------------------------------
-//  CONNECTION
-#define MAX_MESSAGE_SIZE 32
-//  ASCII
-#define ASCII_PRINT_MIN 33
-#define ASCII_PRINT_MAX 126
-const long int ASCII_PRINT_RANGE = ((long int)ASCII_PRINT_MAX - (long int)ASCII_PRINT_MIN + 1); //out of #define bounds
-// ID
-#define ID_SIZE 3
-const long int ID_MAX = (((long int)ASCII_PRINT_RANGE) *((long int)ASCII_PRINT_RANGE) * ((long int)ASCII_PRINT_RANGE) - 1); //out of #define bounds
-// BOARD_ID
-#define BOARD_ID "A0"
+
 
 
 class Action
@@ -46,6 +36,8 @@ class Action
       String title;         // length=3/4, the name of the action 
       short int paramNum;   // param[] size
       String *param;        // any other action parameters
+      // Parameters toStr
+      String toStr;         // String with the result of this->toString(true)
       // Parameters TX
       bool validated;       // true: paramters are OK; false: parameters NOT_OK
       short int txSuccess;  // number of times this action was successfuly tx
@@ -55,19 +47,20 @@ class Action
     public:
       Action();
       Action(Action &action);
-      Action(String id, String txBoardId, String rxBoardId, String mode, String title, short int paramNum, String param[], bool validate, int txSuccess, int txAttempts, bool forceValidation);
+      Action(String id, String txBoardId, String rxBoardId, String mode, String title, short int paramNum, String param[], String toStr="", bool validated = false, int txSuccess = 0, int txAttempts = 0, bool forceValidation = true);
       Action(String strAction);
       ~Action();
     // SETTERS
       void set();
       void set(Action &action);
-      void set(String id, String txBoardId, String rxBoardId, String mode, String title, short int paramNum, String param[], bool validate, int txSuccess, int txAttempts, bool forceValidation);
+      void set(String id, String txBoardId, String rxBoardId, String mode, String title, short int paramNum, String param[], String toStr="", bool validated = false, int txSuccess = 0, int txAttempts = 0, bool forceValidation = true);
       void set(String strAction);
     // ----------------------------------------------------------------------
     // FUNCTIONS
     public:
-      String toString();
-      static String idAdd(String strId, int addition);
+      String toString(bool forceGeneration = false);
+      String idAdd(int addition);                       // class  version
+      static String idAdd(String strId, int addition);  // static version
     private:
       bool validate();
       static long int idToInt(String strId);

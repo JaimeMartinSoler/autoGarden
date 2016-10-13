@@ -1,6 +1,6 @@
 /*
     // ----------------------------------------------------------------------
-    // --- log.h                                                          ---
+    // --- log.cpp                                                        ---
     // ----------------------------------------------------------------------
     // --- General propose log library                                    ---
     // ----------------------------------------------------------------------
@@ -16,6 +16,15 @@
 
 // ----------------------------------------------------------------------
 // FUNCTIONS
+
+// LOG_BEGIN(long int)
+bool LOG_BEGIN(unsigned short int logLevel, long int baudRate)
+// defaults: (unsigned short int logLevel = LOG_LVL, long int baudRate = LOG_BAUDRATE)
+{
+  if ((logLevel < LOG_OFF) && (baudRate > 0))
+    Serial.begin(baudRate);
+}
+
 
 // LOG(unsigned short int, String)
 // If logLevel>=logText: it prints logText in the serial (with line break ("\n"))
