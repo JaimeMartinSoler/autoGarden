@@ -1,12 +1,14 @@
 /*
     // ----------------------------------------------------------------------
-    // --- action.cpp                                                     ---
+    // --- action.h                                                       ---
     // ----------------------------------------------------------------------
-    // --- Actions object, to manage RX/TX messages, meant for NRF24L01   ---
+    // --- Action objects, to manage RX/TX messages, meant for NRF24L01   ---
+    // ----------------------------------------------------------------------
     // --- Author: Jaime Martin Soler                                     ---
-    // --- Date  : 2016-10-10                                             ---
+    // --- Date  : 2016-10-13                                             ---
     // ----------------------------------------------------------------------
 */
+
 
 // ----------------------------------------------------------------------
 // INCLUDES
@@ -163,6 +165,7 @@ Action::~Action()
 
 
 // toString()
+// from all the Action parameters, it builds the String meant to be transmitted.
 String Action::toString()
 {
   String str = id + "," + txBoardId + "," + rxBoardId + "," + mode + "," + title;
@@ -174,6 +177,8 @@ String Action::toString()
 
 
 // validate()
+// it validates (sets validated parameter) depending on the parameters of the Action
+// return: true(validated), false(not validated)
 bool Action::validate()
 {
   long int intId = idToInt(id);
@@ -193,7 +198,11 @@ bool Action::validate()
 }
 
 
-// idAdd(String strId, int addition)
+// idAdd(String, int)
+// It gets the String Id result of the sum of the addition plus strId equivalent.
+// (i.e.: idAdd("ABC",1)->"ABD", idAdd("ABC",-2)->"ABA")
+// It deals with overflow and negative addition.
+// return: strId + addition (taking care of type conversions, etc)
 String Action::idAdd(String strId, int addition)
 {
   long int intId = idToInt(strId);
@@ -210,6 +219,8 @@ String Action::idAdd(String strId, int addition)
 
 
 // idToInt(String strId)
+// return: it gets the equivalent int to the String strId.
+// (i.e.: idToInt("!!!")->0, idAdd("ABC")->285888, idAdd("~~~")->830583)
 long int Action::idToInt(String strId)
 {
   int v = 0;
@@ -225,7 +236,10 @@ long int Action::idToInt(String strId)
 }
 
 
-// intToId(int intId)
+// intToId(int)
+// idToInt(String strId)
+// return: it gets the String equivalent to the int intId.
+// (i.e.: idToInt(0)->"!!!", idAdd(285888)->"ABC", idAdd(830583)->"~~~")
 String Action::intToId(long int intId)
 {
   // TODO: DEBUG

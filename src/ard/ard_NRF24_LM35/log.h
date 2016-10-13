@@ -2,9 +2,10 @@
     // ----------------------------------------------------------------------
     // --- log.h                                                          ---
     // ----------------------------------------------------------------------
-    // --- General propose og library                                     ---
+    // --- General propose log library                                    ---
+    // ----------------------------------------------------------------------
     // --- Author: Jaime Martin Soler                                     ---
-    // --- Date  : 2016-10-11                                             ---
+    // --- Date  : 2016-10-13                                             ---
     // ----------------------------------------------------------------------
 */
 
@@ -34,7 +35,8 @@
 
 // Flush and delay
 #define LOG_FLUSH_ENABLE 1  // allow Serial.flush(); in every LOG() call
-#define LOG_DELAY_ENABLE 0  // allow delay(LOG_DELAY_ENABLE); in every LOG() call
+#define LOG_DELAY_ENABLE 0  // 0:no delay, >0: delay(LOG_DELAY_ENABLE); in every LOG() call
+
 
 
 

@@ -2,9 +2,11 @@
     // ----------------------------------------------------------------------
     // --- rxtx.cpp                                                       ---
     // ----------------------------------------------------------------------
-    // --- RXTX                                                           ---
+    // --- High level static functions to deal with RX, TX and also       ---
+    // --- generation and execution of received actions                   ---
+    // ----------------------------------------------------------------------
     // --- Author: Jaime Martin Soler                                     ---
-    // --- Date  : 2016-10-11                                             ---
+    // --- Date  : 2016-10-13                                             ---
     // ----------------------------------------------------------------------
 */
 
@@ -23,10 +25,22 @@
 
 
 // ----------------------------------------------------------------------
+// PARAMETERS (static parameters need to be initialized in the .cpp file)
+// Generated Actions
+const float RXTX::GA_TEMP_MAX = 40.00;
+const unsigned long RXTX::GA_TEMP_MAX_ACTION_INTERVAL = 600000;
+unsigned long RXTX::ga_temp_max_action_last = 0;
+
+
+
+
+// ----------------------------------------------------------------------
 // FUNCTIONS
 
 
-// rx()
+// rx(RF24,rxLoop=false)
+// Receive and manage radio message, creating and executing the necessary Actions
+// return: true(rx success), false(rx failed)
 bool RXTX::rx(RF24 &radio, bool rxLoop = false)
 {
   // rx loop (if !rxLoop it breaks at the bottom)
@@ -78,7 +92,8 @@ bool RXTX::rx(RF24 &radio, bool rxLoop = false)
 }
 
 
-// tx()
+// tx(RF24, Action)
+// Transmit the passed Action
 // return: true(ACK_RX), false(NO_ACK_RX)
 bool RXTX::tx(RF24 &radio, Action &action)
 {
@@ -128,7 +143,9 @@ bool RXTX::tx(RF24 &radio, Action &action)
 }
 
 
-// exec()
+// exec(RF24,Action)
+// Execute and Action, both received and meant to be transmitted
+// return: true(exec success), false(exec failed)
 bool RXTX::exec(RF24 &radio, Action &action)
 {
   LOG(LOG_INF, "  Action to execute: \"" + action.toString() + "\"");
@@ -172,6 +189,9 @@ bool RXTX::exec(RF24 &radio, Action &action)
 
 
 // generateAction()
+// Checks the status of the sensors and autonomously generates and Action, if needed
+// This function is meant to be executed in the RX wait loop every few milliseconds
+// return: true(action generated), false(no action generated)
 bool RXTX::generateAction(Action &action)
 {
   // Check Temperature

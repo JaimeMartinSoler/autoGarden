@@ -1,10 +1,11 @@
 /*
     // ----------------------------------------------------------------------
-    // --- log.cpp                                                        ---
+    // --- log.h                                                          ---
     // ----------------------------------------------------------------------
-    // --- General propose og library                                     ---
+    // --- General propose log library                                    ---
+    // ----------------------------------------------------------------------
     // --- Author: Jaime Martin Soler                                     ---
-    // --- Date  : 2016-10-11                                             ---
+    // --- Date  : 2016-10-13                                             ---
     // ----------------------------------------------------------------------
 */
 
@@ -16,6 +17,8 @@
 // ----------------------------------------------------------------------
 // FUNCTIONS
 
+// LOG(unsigned short int, String)
+// If logLevel>=logText: it prints logText in the serial (with line break ("\n"))
 bool LOG(unsigned short int logLevel, String logText) 
 {
   if(logLevel >= LOG_LVL) {
@@ -32,6 +35,8 @@ bool LOG(unsigned short int logLevel, String logText)
   }
 }
 
+// LOG_noln(unsigned short int, String)
+// If logLevel>=logText: it prints logText in the serial (withOUT line break ("\n"))
 bool LOG_noln(unsigned short int logLevel, String logText) 
 {
   if(logLevel >= LOG_LVL) {

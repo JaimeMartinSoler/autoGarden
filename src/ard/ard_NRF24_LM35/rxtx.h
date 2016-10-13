@@ -2,9 +2,11 @@
     // ----------------------------------------------------------------------
     // --- rxtx.h                                                         ---
     // ----------------------------------------------------------------------
-    // --- TODO                                                           ---
+    // --- High level static functions to deal with RX, TX and also       ---
+    // --- generation and execution of received actions                   ---
+    // ----------------------------------------------------------------------
     // --- Author: Jaime Martin Soler                                     ---
-    // --- Date  : 2016-10-11                                             ---
+    // --- Date  : 2016-10-13                                             ---
     // ----------------------------------------------------------------------
 */
 
@@ -19,20 +21,21 @@
 
 // ----------------------------------------------------------------------
 // INCLUDES
-#include "action.h"
 #include <RF24.h>
+#include "action.h"
 
-
-// ----------------------------------------------------------------------
-// PARAMETERS
-// Generated Actions
-const float GA_TEMP_MAX = 40.00;
-const unsigned long GA_TEMP_MAX_ACTION_INTERVAL = 600000;
-static unsigned long ga_temp_max_action_last = 0; // initialized to 0 in .cpp
 
 
 class RXTX
 {
+    // ----------------------------------------------------------------------
+    // PARAMETERS (static parameters need to be initialized in the .cpp file)
+    // Generated Actions
+    private:
+      static const float GA_TEMP_MAX;
+      static const unsigned long GA_TEMP_MAX_ACTION_INTERVAL;
+      static unsigned long ga_temp_max_action_last;
+
     // ----------------------------------------------------------------------
     // FUNCTIONS
     public:
