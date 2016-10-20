@@ -26,9 +26,6 @@
 
 long int powInt(int base, int exponent);
 bool strEq(String str0, String str1);
-void clearCharArray(char charArray[], short int charArraySize);
-void copyCharArray(char dest[], const char src[], short int minSize);
-void stringToCharArray(String str, char dest[], short int destSize);
 
 #endif
 

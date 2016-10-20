@@ -29,29 +29,10 @@ bool LOG_BEGIN(unsigned short int logLevel, long int baudRate)
 
 // LOG(unsigned short int, String)
 // If logLevel>=logText: it prints logText in the serial (with line break ("\n"))
-bool LOG(unsigned short int logLevel, String str0, String str1, String str2, String str3, String str4)
-// defaults: (String str1 = "", String str2 = "", String str3 = "", String str4 = "")
+bool LOG(unsigned short int logLevel, String logText) 
 {
   if(logLevel >= LOG_LVL) {
-    
-    if (str1.length() == 0) {
-      Serial.println(str0);
-    } else {
-      Serial.print(str0);
-      if (str2.length() == 0) {
-        Serial.println(str1);
-      } else {
-        Serial.print(str1);
-        if (str3.length() == 0) {
-          Serial.println(str2);
-        } else {
-          Serial.print(str2);
-          if (str4.length() == 0) {
-            Serial.println(str3);
-          } else {
-            Serial.print(str3);
-            Serial.println(str4);
-    } } } }
+    Serial.println(logText);
     #if LOG_FLUSH_ENABLE > 0
       Serial.flush(); // if we don't flush the line, it might crash or many Serial.print calls
     #endif
@@ -59,7 +40,6 @@ bool LOG(unsigned short int logLevel, String str0, String str1, String str2, Str
       delay(LOG_DELAY_ENABLE);
     #endif
     return true;
-    
   } else {
     return false;
   }
@@ -67,20 +47,10 @@ bool LOG(unsigned short int logLevel, String str0, String str1, String str2, Str
 
 // LOG_noln(unsigned short int, String)
 // If logLevel>=logText: it prints logText in the serial (withOUT line break ("\n"))
-bool LOG_noln(unsigned short int logLevel, String str0, String str1, String str2, String str3, String str4)
-// defaults: (String str1 = "", String str2 = "", String str3 = "", String str4 = "")
+bool LOG_noln(unsigned short int logLevel, String logText) 
 {
   if(logLevel >= LOG_LVL) {
-    Serial.print(str0);
-    if (str1.length() > 0) {
-      Serial.print(str1);
-      if (str2.length() > 0) {
-        Serial.print(str2);
-        if (str3.length() > 0) {
-          Serial.print(str3);
-          if (str4.length() > 0) {
-            Serial.print(str4);
-    } } } }
+    Serial.print(logText);
     #if LOG_FLUSH_ENABLE > 0
       Serial.flush(); // if we don't flush the line, it might crash or many Serial.print calls
     #endif
@@ -88,7 +58,6 @@ bool LOG_noln(unsigned short int logLevel, String str0, String str1, String str2
       delay(LOG_DELAY_ENABLE);
     #endif
     return true;
-    
   } else {
     return false;
   }

@@ -1,6 +1,6 @@
 /*
     // ----------------------------------------------------------------------
-    // --- helper.h                                                       ---
+    // --- helper.cpp                                                     ---
     // ----------------------------------------------------------------------
     // --- General propose library with helpful functions                 ---
     // ----------------------------------------------------------------------
@@ -9,14 +9,9 @@
     // ----------------------------------------------------------------------
 */
 
-#ifndef HELPER_H
-#define HELPER_H
-
-#if ARDUINO >= 100
-  #include "Arduino.h"
-#else
-  #include "WProgram.h"
-#endif
+// ----------------------------------------------------------------------
+// INCLUDES
+#include "helper.h"
 
 
 
@@ -24,11 +19,24 @@
 // ----------------------------------------------------------------------
 // FUNCTIONS
 
-long int powInt(int base, int exponent);
-bool strEq(String str0, String str1);
-void clearCharArray(char charArray[], short int charArraySize);
-void copyCharArray(char dest[], const char src[], short int minSize);
-void stringToCharArray(String str, char dest[], short int destSize);
 
-#endif
+// powInt(int, int)
+// return: base to the power of exponent
+long int powInt(int base, int exponent)
+{
+  long int value = 1;
+  for (int i=0; i<exponent; i++) {
+    value *= base;
+  }
+  return value;
+}
+
+
+// strEq(String, String)
+// return: true(str0==str1), false(str0!=str1)
+bool strEq(String str0, String str1)
+{
+  return (strcmp(str0.c_str(),str1.c_str()) == 0);
+}
+
 

@@ -21,7 +21,6 @@
 #include "helper.h"
 #include "action.h"
 #include "sensors.h"
-#include "MemoryFree.h"
 
 
 
@@ -29,11 +28,35 @@
 // ----------------------------------------------------------------------
 // PARAMETERS
 
-// Generated Actions
-const float RXTX::GA_TEMP_MAX = 26.00;
-const long RXTX::GA_TEMP_MAX_ACTION_INTERVAL = 600000;
-long RXTX::ga_temp_max_action_last = -RXTX::GA_TEMP_MAX_ACTION_INTERVAL;
+// board ID
+const String RXTX::BOARD_ID = "A0";
 
+// Generated Actions
+const float RXTX::GA_TEMP_MAX = 40.00;
+const unsigned long RXTX::GA_TEMP_MAX_ACTION_INTERVAL = 600000;
+unsigned long RXTX::ga_temp_max_action_last = 0;
+
+// Function Parameters:
+// Function Parameters: Long (length<=4)
+const String RXTX::FUNC_GET_L = "GET";
+const String RXTX::FUNC_SET_L = "SET";
+// Function Parameters: Short (length=1)
+const String RXTX::FUNC_GET_S = "G";
+const String RXTX::FUNC_SET_S = "S";
+   
+// Weather Parameters:
+// Weather Parameters: Long (length<=4)
+const String RXTX::WPAR_TEMP_L = "TEMP";
+const String RXTX::WPAR_HUMI_L = "HUMI";
+// Weather Parameters: Short (length=1)
+const String RXTX::WPAR_TEMP_S = "T";
+const String RXTX::WPAR_HUMI_S = "H";
+
+// Sensor Id Parameters:
+// Sensor Id Parameters: Long (length<=4)
+const String RXTX::TEMP_LM35_L = "AIR";
+// Weather Parameters: Short (length=1)
+const String RXTX::TEMP_LM35_S = "A";
 
 
 
@@ -47,18 +70,15 @@ long RXTX::ga_temp_max_action_last = -RXTX::GA_TEMP_MAX_ACTION_INTERVAL;
 bool RXTX::rx(RF24 &radio, bool rxLoop)
 // defaults: (bool rxLoop = false)
 {
-  Action rxAction, txAction;
-  
   // rx loop (if !rxLoop it breaks at the bottom)
   while(true) {
-    
-    LOG_FreeMemory();
     
     // RX start listening TX
     radio.startListening();
     
     // RX loop: wait for a message
-    LOG(LOG_INF, F("\n  RX waiting message..."));
+    LOG(LOG_INF, "\n  RX waiting message...");
+    Action txAction;
     while(!radio.available()) {
       // Check sensors to generate actions, if required
       if(generateAction(txAction)) {  // returns true if an action has been generated
@@ -70,30 +90,29 @@ bool RXTX::rx(RF24 &radio, bool rxLoop)
   
     // ACK_TX payload before RX
     // issue!!!: ACK payload is getting delayed by 1 (ACK_RX[i]=ACK_TX[i-1]), but this does not affect to a normal ACK
-    char charAckTX[] = "ACK from Arduino";
+    String strAckTX = "ACK from Arduino";
+    char charAckTX[strAckTX.length()];
+    strAckTX.toCharArray(charAckTX, strAckTX.length()+1); // TODO: how would this '+1' deal with exact 32 bytes payload???
     radio.writeAckPayload(1, charAckTX, sizeof(charAckTX));
     
     // RX message
     char charMsgRX[Sensors::NRF24_PAYLOAD_MAX_SIZE];
     radio.read(&charMsgRX, sizeof(charMsgRX));
-    LOG(LOG_INF, F("RX: \""), String(charMsgRX), F("\""));
-    LOG(LOG_INF, F("  ACK_TX_payload: \""), String(charAckTX), F("\""));
+    String strMsgRX = String(charMsgRX);
+    LOG(LOG_INF, "RX: \"" + strMsgRX + "\"");
+    LOG(LOG_INF, "  ACK_TX_payload: \"" + strAckTX + "\"");
   
     // create an action from RX and execute it
-    rxAction.set(charMsgRX);
-    LOG(LOG_DET, F("  Action generated: \""), String(rxAction.text), F("\""));
-    // issue!!!: Arduino shows memory problems with heavy recursion, so with this loop we avoid recursion
-    // but exec can still update the action to execute, although exec cannot call >1 exec at once
-    bool execActionChanged = true;
-    while (execActionChanged) {
-      exec(radio, rxAction, execActionChanged);
-    }
+    Action rxAction(strMsgRX);
+    LOG(LOG_INF, "  Action generated: \"" + rxAction.toString() + "\"");
+    exec(radio, rxAction);
+    LOG(LOG_DEB, "in rx(): exec passed");
 
     // keep/breake infinite loop
+    LOG(LOG_DEB, "in rx(): rxLoop=" + String(rxLoop));
     if (!rxLoop)
       return true;
-    
-    LOG_FreeMemory();
+    LOG(LOG_DEB, "in rx(): last line of loop");
   }
   // if RX loop is broken, return false
   return false;
@@ -115,16 +134,17 @@ bool RXTX::tx(RF24 &radio, Action &action)
   radio.stopListening();
     
   // create message
-  char charMsgTX[Sensors::NRF24_PAYLOAD_MAX_SIZE];
-  copyCharArray(charMsgTX, action.text, min(sizeof(charMsgTX),sizeof(action.text)));
+  String strMsgTX = action.toString();
+  char charMsgTX[strMsgTX.length()];
+  strMsgTX.toCharArray(charMsgTX, strMsgTX.length()+1); // TODO: how would this '+1' deal with exact 32 bytes payload???
 
   // TX message
-  LOG(LOG_INF, F("TX: \""), String(charMsgTX), F("\""));
+  LOG(LOG_INF, "TX: \"" + strMsgTX + "\"");
   
   // No ACK received:
   action.txAttempts++;
   if (!radio.write(&charMsgTX, sizeof(charMsgTX))){
-    LOG(LOG_WAR, F("  ACK_RX: NO"));
+    LOG(LOG_WAR, "  ACK_RX: NO");
     return false;
     
   // ACK_RX:
@@ -135,13 +155,14 @@ bool RXTX::tx(RF24 &radio, Action &action)
     // ACK_RX (ACK payload OK):
     // issue!!!: ACK payload is getting delayed by 1 (ACK_RX[i]=ACK_TX[i-1]), but this does not affect to a normal ACK
     if (radio.isAckPayloadAvailable()) {
-      char charAckRX[Sensors::NRF24_PAYLOAD_ACK_MAX_SIZE];
+      char charAckRX[Sensors::NRF24_PAYLOAD_MAX_SIZE];
       radio.read(&charAckRX, sizeof(charAckRX));
-      LOG(LOG_INF, F("  ACK_RX: YES (payload=\""), String(charAckRX), F("\")"));
+      String strAckRX = String(charAckRX);
+      LOG(LOG_INF, "  ACK_RX: YES\n  ACK_RX_payload: \"" + strAckRX + "\"");
       
     // ACK_RX (ACK payload <empty>): 
     } else {
-      LOG(LOG_INF, F("  ACK_RX: YES (payload=<empty>)"));
+      LOG(LOG_INF, "  ACK_RX: YES\n  ACK_RX_payload: <empty>");
     }
     return true;
   }
@@ -149,59 +170,45 @@ bool RXTX::tx(RF24 &radio, Action &action)
 }
 
 
-// exec(&RF24,&Action,&bool)
+// exec(&RF24,&Action)
 // Execute and Action, both received and meant to be transmitted
 // return: true(exec success), false(exec failed)
-bool RXTX::exec(RF24 &radio, Action &action, bool &execActionChanged)
+bool RXTX::exec(RF24 &radio, Action &action)
 {
-  LOG(LOG_INF, F("  Action to execute: \""), String(action.text), F("\""));
-
-  execActionChanged = false;
+  LOG(LOG_DET, "  Action to execute: \"" + action.toString() + "\"");
   
   // check action.validated
   if (!action.validated) {
-    LOG(LOG_WAR, F("  Action to execute: \""), String(action.text), F("\" is NOT validated"));
+    LOG(LOG_WAR, "  Action to execute: \"" + action.toString() + "\" is NOT validated");
     return false;
   }
 
+// ABC,R0,A0,UN,GET,TEMP,LM35"
+
   // RX: "III,TT,<AO>,MM,FFF,..."
-  char txBoardId[BOARD_ID_MAX_SIZE];
-  char rxBoardId[BOARD_ID_MAX_SIZE];
-  action.getTxBoardId(txBoardId);
-  action.getRxBoardId(rxBoardId);
-  LOG(LOG_DET, F("    txBoardId: \""), String(txBoardId), F("\""));
-  LOG(LOG_DET, F("    rxBoardId: \""), String(rxBoardId), F("\""));
-  if (Action::compareCharArray(rxBoardId, BOARD_ID, sizeof(rxBoardId), sizeof(BOARD_ID))) {
+  LOG(LOG_DET, "    rxBoardId: \"" + action.rxBoardId + "\"");
+  if (strEq(action.rxBoardId,BOARD_ID)) {
     
     // "III,TT,<AO>,MM,<GET>,..."
-    char func[FUNC_MAX_SIZE];
-    action.getFunc(func);
-    LOG(LOG_DET, F("    function: \""), String(func), F("\""));
-    if (Action::compareCharArray(func,FUNC_GET_L, sizeof(func), sizeof(FUNC_GET_L)) ||
-        Action::compareCharArray(func,FUNC_GET_S, sizeof(func), sizeof(FUNC_GET_S))) {
+    LOG(LOG_DET, "    function: \"" + action.title + "\"");
+    if (strEq(action.title,FUNC_GET_L) || strEq(action.title,FUNC_GET_S)) {
       
       // "III,TT,<AO>,MM,<GET>,WWWW,IIII"
-      int paramNum = action.getParamNum();
-      LOG(LOG_DET, F("    paramNum: "), String(paramNum));
-      if (paramNum==2) {
+      LOG(LOG_DET, "    paramNum: " + String(action.paramNum));
+      if (action.paramNum==2) {
         
         // "III,TT,<AO>,MM,<GET>,<T/TEMP>,IIII"
-        char wpar[WPAR_MAX_SIZE];
-        action.getWpar(wpar);
-        LOG(LOG_DET, F("    weather param: \""), String(wpar), F("\""));
-        if (Action::compareCharArray(wpar, WPAR_TEMP_L, sizeof(wpar), sizeof(WPAR_TEMP_L)) ||
-            Action::compareCharArray(wpar, WPAR_TEMP_S, sizeof(wpar), sizeof(WPAR_TEMP_S))) {
+        LOG(LOG_DET, "    weather param: \"" + action.param[0] + "\"");
+        if(strEq(action.param[0],WPAR_TEMP_L) || strEq(action.param[0],WPAR_TEMP_S)) {
           
           // "III,TT,<AO>,MM,<GET>,<T/TEMP>,<A/AIR>"
-          char wparId[WPARID_MAX_SIZE];
-          action.getWparId(wparId);
-          LOG(LOG_DET, F("    weather param id: \""), String(wparId), F("\""));
-          if (Action::compareCharArray(wparId, WPARID_TEMP_LM35_L, sizeof(wparId), sizeof(WPARID_TEMP_LM35_L)) ||
-              Action::compareCharArray(wparId, WPARID_TEMP_LM35_S, sizeof(wparId), sizeof(WPARID_TEMP_LM35_S))) {
+          LOG(LOG_DET, "    weather param id: \"" + action.param[1] + "\"");
+          if(strEq(action.param[1],TEMP_LM35_L) || strEq(action.param[1],TEMP_LM35_S)) {
             float tempC = Sensors::getTempLM35();
-            LOG(LOG_DET, F("  Action to execute: \""), String(action.text), F("\" successfully executed"));
-            action.set("XYZ,"+String(BOARD_ID)+","+String(BOARD_R0_ID)+",UN,SET,TEMP,AIR,"+String(tempC));
-            execActionChanged = true;
+            LOG(LOG_INF, "  Action to execute: \"" + action.toString() + "\" successfully executed");
+            Action txAction("XYZ," + BOARD_ID + ",R0,UN,SET,TEMP,AIR," + String(tempC));
+            LOG(LOG_DET, "    txAction.validated: \"" + String(txAction.validated) + "\"");
+            exec(radio, txAction);
             return true;
           }
         }
@@ -210,14 +217,14 @@ bool RXTX::exec(RF24 &radio, Action &action, bool &execActionChanged)
   }
   
   // TX: "III,<AO>,RR,MM,..."
-  else if (Action::compareCharArray(txBoardId, BOARD_ID, sizeof(txBoardId), sizeof(BOARD_ID))) {
+  else if (strEq(action.txBoardId,BOARD_ID)) {
     if (tx(radio, action)) {
-      LOG(LOG_DET, F("  Action to execute: \""), String(action.text), F("\" successfully executed"));
+      LOG(LOG_INF, "  Action to execute: \"" + action.toString() + "\" successfully executed");
       return true;
     }
   }
   
-  LOG(LOG_WAR, F("  <<<WARNING: Action to execute: \""), String(action.text), F("\" was NOT successfully executed>>>"));
+  LOG(LOG_WAR, "  Action to execute: \"" + action.toString() + "\" was NOT successfully executed");
   return false;
 }
 
@@ -229,13 +236,13 @@ bool RXTX::exec(RF24 &radio, Action &action, bool &execActionChanged)
 bool RXTX::generateAction(Action &action)
 {
   // Check Temperature
-  if ((signed long)millis() - ga_temp_max_action_last >= GA_TEMP_MAX_ACTION_INTERVAL) {
+  if (millis() - ga_temp_max_action_last >= GA_TEMP_MAX_ACTION_INTERVAL) {
     // get temperature in celsius
     float tempC = Sensors::getTempLM35();
     if (tempC >= GA_TEMP_MAX) {
-      ga_temp_max_action_last = (signed long)millis();
-      action.set("000,"+String(BOARD_ID)+","+String(BOARD_R0_ID)+",UN,SET,TEMP,AIR,"+String(tempC));
-      LOG(LOG_INF, F("  Generate Action: tempC >= GA_TEMP_MAX"));
+      ga_temp_max_action_last = millis();
+      action.set("000,R0,UN,SET,TEMP,0,"+String(tempC)+",UA");
+      LOG(LOG_INF, "Generate Action: tempC >= GA_TEMP_MAX");
       return true;
     }
   }

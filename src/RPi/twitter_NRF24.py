@@ -145,7 +145,8 @@ while(True):
 	radio.stopListening()
 	
 	# create message
-	strMsgTx = "ABC,R0,A0,UN,GET,TEMP,0";
+	#strMsgTx = "ABC,R0,A0,UN,GET,TEMP,AIR";
+	strMsgTx = "ABC,R0,A0,UN,GET,TEMP,AIR";
 	intMsgTx = stringToIntArray(strMsgTx)
 	
 	# TX message
@@ -162,13 +163,13 @@ while(True):
 		if (radio.isAckPayloadAvailable()):
 			radio.read(intAckRx, radio.getDynamicPayloadSize())
 			strAckRx = intArrayToString(intAckRx)
-			print ("  ACK_RX: YES\n  ACK_RX_payload: \"{}\"".format(strAckRx))
+			print ("  ACK_RX: YES (payload=\"{}\")".format(strAckRx))
 		# ACK_RX (ACK payload <empty>): 
 		else:
-			print ("  ACK_RX: YES\n  ACK_RX_payload: <empty>")
+			print ("  ACK_RX: YES (payload=<empty>)")
 		# RX response
 		rx_temp()
 		
 	# delay
-	time.sleep(5)
+	time.sleep(1)
 	

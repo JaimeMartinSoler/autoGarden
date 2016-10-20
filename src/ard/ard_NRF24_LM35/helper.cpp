@@ -12,6 +12,7 @@
 // ----------------------------------------------------------------------
 // INCLUDES
 #include "helper.h"
+#include "log.h"
 
 
 
@@ -39,4 +40,28 @@ bool strEq(String str0, String str1)
   return (strcmp(str0.c_str(),str1.c_str()) == 0);
 }
 
+
+// clearCharArray(char[], short int)
+void clearCharArray(char charArray[], short int charArraySize)
+{
+  for (int i=0; i<charArraySize; i++)
+    charArray[i] = '\0';
+}
+
+
+// copyCharArray(char[], char[], short int)
+void copyCharArray(char dest[], const char src[], short int minSize)
+{
+  for (int i=0; i<minSize; i++)
+    dest[i] = src[i];
+}
+
+
+// stringToCharArray(String, char[], short int) 
+void stringToCharArray(String str, char dest[], short int destSize) 
+{
+  int strSize = str.length();
+  clearCharArray(dest, destSize);
+  copyCharArray(dest, str.c_str(), min(destSize, strSize));
+}
 
