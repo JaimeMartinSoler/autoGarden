@@ -54,3 +54,8 @@ twitter_pass.*
 
 # Custom: Python binary files
 *.pyc
+
+# Log files
+log_*
+log-*
+*.log

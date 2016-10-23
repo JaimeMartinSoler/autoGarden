@@ -11,6 +11,7 @@ import RPi.GPIO as GPIO
 from lib_nrf24 import NRF24
 import time
 import spidev
+from log import LOG, LOG_DEB, LOG_DET, LOG_INF, LOG_WAR, LOG_ERR, LOG_CRS, LOG_OFF
  
 
 
@@ -82,7 +83,7 @@ def rx_temp():
 	radio.startListening()
 	
 	# RX loop: wait for a message
-	print("  RX waiting message...")
+	LOG(LOG_INF, "  RX waiting message...")
 	while (not radio.available()):
 		time.sleep(0.010)
 		
@@ -95,8 +96,8 @@ def rx_temp():
 	# RX the message
 	radio.read(intMsgRx, radio.getDynamicPayloadSize())
 	strMsgRx = intArrayToString(intMsgRx)
-	print("RX: \"{}\"".format(strMsgRx))
-	print("  ACK_TX_payload: \"{}\"".format(strAckTx))
+	LOG(LOG_INF, "RX: \"{}\"".format(strMsgRx))
+	LOG(LOG_INF, "  ACK_TX_payload: \"{}\"".format(strAckTx))
 	
 	# return RX string
 	return strMsgRx
@@ -150,10 +151,10 @@ while(True):
 	intMsgTx = stringToIntArray(strMsgTx)
 	
 	# TX message
-	print("\nTX: \"{}\"".format(strMsgTx))
+	LOG(LOG_INF, "TX: \"{}\"".format(strMsgTx), logPreLn=True)
 	# No ACK received:
 	if(radio.write(intMsgTx) == 0):
-		print("  ACK_RX: NO")
+		LOG(LOG_INF, "  ACK_RX: NO")
 	
 	# ACK_RX:
 	# issue!!!: when a row of msg is read, after TX stops, RX keeps reading ACKs for 2-3 times
@@ -163,10 +164,10 @@ while(True):
 		if (radio.isAckPayloadAvailable()):
 			radio.read(intAckRx, radio.getDynamicPayloadSize())
 			strAckRx = intArrayToString(intAckRx)
-			print ("  ACK_RX: YES (payload=\"{}\")".format(strAckRx))
+			LOG(LOG_INF, "  ACK_RX: YES (payload=\"{}\")".format(strAckRx))
 		# ACK_RX (ACK payload <empty>): 
 		else:
-			print ("  ACK_RX: YES (payload=<empty>)")
+			LOG(LOG_INF, "  ACK_RX: YES (payload=<empty>)")
 		# RX response
 		rx_temp()
 		
