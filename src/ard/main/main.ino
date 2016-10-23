@@ -1,9 +1,9 @@
 /*
     // ----------------------------------------------------------------------
-    // --- ard_NRF24_LM35.h                                               ---
+    // --- main.ino                                                       ---
     // ----------------------------------------------------------------------
     // --- Autogarden Arduino main file                                   ---
-    // --- Arduino-RaspberryPi high level communication of climate params ---
+    // --- Arduino-RaspberryPi high level communication of weather params ---
     // --- NRF24 config:  http://invent.module143.com/daskal_tutorial/rpi-3-tutorial-14-wireless-pi-to-arduino-communication-with-nrf24l01/
     // ----------------------------------------------------------------------
     // --- Author: Jaime Martin Soler                                     ---
@@ -18,7 +18,6 @@
 // INCLUDES
 #include <SPI.h>
 #include <RF24.h>
-#include "config.h"
 #include "log.h"
 #include "action.h"
 #include "rxtx.h"

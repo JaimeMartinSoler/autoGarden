@@ -21,7 +21,7 @@ LOG_CRS = 5   # crash
 LOG_OFF = 6   # off
 
 # LOG_LEVEL
-LOG_LVL = LOG_INF	# the current log level
+LOG_LVL = LOG_DEB	# the current log level
 
 # LOG_PATHS
 LOG_PATH = 'log'
@@ -34,6 +34,8 @@ LOG_TIME_FORMAT = '[%Y-%m-%d %H:%M:%S]: '
 # ----------------------------------------------------------------------
 # FUNCTIONS
 
+# -------------------------------------
+# LOG
 def LOG(logLevel, logText, logPrint=True, logFile=True, logPrintDate=True, logFileDate=True, logPreLn=False):
 	if (logLevel >= LOG_LVL):
 		preLn = ''

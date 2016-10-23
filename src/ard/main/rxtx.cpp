@@ -16,7 +16,6 @@
 
 #include <RF24.h>
 #include "rxtx.h"
-#include "config.h"
 #include "log.h"
 #include "helper.h"
 #include "action.h"
@@ -117,13 +116,12 @@ bool RXTX::tx(RF24 &radio, Action &action)
   // create message
   char charMsgTX[Sensors::NRF24_PAYLOAD_MAX_SIZE];
   copyCharArray(charMsgTX, action.text, min(sizeof(charMsgTX),sizeof(action.text)));
-
   // TX message
   LOG(LOG_INF, F("TX: \""), String(charMsgTX), F("\""));
   
   // No ACK received:
   action.txAttempts++;
-  if (!radio.write(&charMsgTX, sizeof(charMsgTX))){
+  if (!radio.write(&charMsgTX, min(Sensors::NRF24_PAYLOAD_MAX_SIZE,sizeof(charMsgTX)-1))){  // -1, to prevent '\0' from tx
     LOG(LOG_WAR, F("  ACK_RX: NO"));
     return false;
     

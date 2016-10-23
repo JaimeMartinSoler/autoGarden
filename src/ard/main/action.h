@@ -111,7 +111,7 @@ class Action
       Action(char text[], int textSize = ACTION_MAX_SIZE);
       Action(String str);
       ~Action();
-    // SETTERS
+    // FUNCTIONS - SETTERS
     public:
       void set();
       void set(Action &action);

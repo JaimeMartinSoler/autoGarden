@@ -65,3 +65,14 @@ void stringToCharArray(String str, char dest[], short int destSize)
   copyCharArray(dest, str.c_str(), min(destSize, strSize));
 }
 
+
+// charArraySizeUntil0(char[], short int);
+int charArraySizeUntil0(char charArray[], short int charArraySize)
+{
+  int charSize = -1;
+  while (charArray[++charSize] != '\0')
+  ;
+  return charSize;
+}
+
+

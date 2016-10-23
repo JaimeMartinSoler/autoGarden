@@ -13,7 +13,6 @@
 // ----------------------------------------------------------------------
 // INCLUDES
 #include <RF24.h>
-#include "config.h"
 #include "sensors.h"
 
 

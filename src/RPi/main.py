@@ -1,6 +1,15 @@
 #!/usr/bin/python
 
-# http://invent.module143.com/daskal_tutorial/rpi-3-tutorial-14-wireless-pi-to-arduino-communication-with-nrf24l01/
+# ----------------------------------------------------------------------
+# --- main.py                                                        ---
+# ----------------------------------------------------------------------
+# --- Autogarden Arduino main file                                   ---
+# --- Arduino-RaspberryPi high level communication of weather params ---
+# --- NRF24 config:  http:#invent.module143.com/daskal_tutorial/rpi-3-tutorial-14-wireless-pi-to-arduino-communication-with-nrf24l01/
+# ----------------------------------------------------------------------
+# --- Author: Jaime Martin Soler                                     ---
+# --- Date  : 2016-10-23                                             ---
+# ----------------------------------------------------------------------
 
 
 
@@ -12,7 +21,8 @@ from lib_nrf24 import NRF24
 import time
 import spidev
 from log import LOG, LOG_DEB, LOG_DET, LOG_INF, LOG_WAR, LOG_ERR, LOG_CRS, LOG_OFF
- 
+from action import Action, idAdd
+
 
 
 
@@ -134,7 +144,7 @@ radio.printDetails()
 # role
 #role = ROLE_TX
  
-
+ 
  
  
 # --------------------------------------------------------------

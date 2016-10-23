@@ -247,8 +247,36 @@ String Action::idAdd(String strId, int addition)
 // return: true(validated), false(not validated)
 bool Action::validate()
 {
-  this->validated = true;
-  return validated;
+  // ID parameter
+  char id[ID_MAX_SIZE];
+  getId(id, ID_MAX_SIZE);
+  // BOARD_ID_TX, BOARD_ID_RX parameters
+  char txBoardId[BOARD_ID_MAX_SIZE];
+  char rxBoardId[BOARD_ID_MAX_SIZE];
+  getTxBoardId(txBoardId, BOARD_ID_MAX_SIZE);
+  getRxBoardId(rxBoardId, BOARD_ID_MAX_SIZE);
+  // FUNC parameters
+  char func[FUNC_MAX_SIZE];
+  getFunc(func);
+  
+  // ID validate
+  if (charArraySizeUntil0(id,ID_MAX_SIZE) != (ID_MAX_SIZE-1))
+    this->validated = false;
+  // BOARD_ID_TX, BOARD_ID_RX validate
+  else if (!compareCharArray(rxBoardId, BOARD_ID, sizeof(rxBoardId), sizeof(BOARD_ID)) &&
+           !compareCharArray(txBoardId, BOARD_ID, sizeof(txBoardId), sizeof(BOARD_ID)))
+     this->validated = false;
+  // FUNC validate
+  else if (!compareCharArray(func, FUNC_GET_L, sizeof(func), sizeof(FUNC_GET_L)) &&
+           !compareCharArray(func, FUNC_SET_L, sizeof(func), sizeof(FUNC_SET_L)) &&
+           !compareCharArray(func, FUNC_GET_S, sizeof(func), sizeof(FUNC_GET_S)) &&
+           !compareCharArray(func, FUNC_SET_S, sizeof(func), sizeof(FUNC_SET_S)))
+    this->validated = false;
+  else
+    this->validated = true;
+    
+  // return this->validated;
+  return this->validated;
 }
 
 
@@ -283,7 +311,7 @@ void Action::getCharArrayInPosition(char charArray[], int charArraySize, int pos
 }
 
 
-// idToInt(String strId)
+// idToInt(String)
 // return: it gets the equivalent int to the String strId.
 // (i.e.: idToInt("!!!")->0, idAdd("ABC")->285888, idAdd("~~~")->830583)
 long int Action::idToInt(String strId)
