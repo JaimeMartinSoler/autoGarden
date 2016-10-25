@@ -133,10 +133,10 @@ void Action::getRxBoardId(char rxBoardId[], int charArraySize) {
   // default: (int charArraySize = BOARD_ID_MAX_SIZE)
   getCharArrayInPosition(rxBoardId, charArraySize, BOARD_ID_RX_POS);
 }
-// getMode(char[], int)
-void Action::getMode(char mode[], int charArraySize) {
-  // default: (int charArraySize = MODE_MAX_SIZE)
-  getCharArrayInPosition(mode, charArraySize, MODE_POS);
+// getType(char[], int)
+void Action::getType(char mode[], int charArraySize) {
+  // default: (int charArraySize = TYPE_MAX_SIZE)
+  getCharArrayInPosition(mode, charArraySize, TYPE_POS);
 }
 // getFunc(char[], int)
 void Action::getFunc(char func[], int charArraySize) {
@@ -255,6 +255,9 @@ bool Action::validate()
   char rxBoardId[BOARD_ID_MAX_SIZE];
   getTxBoardId(txBoardId, BOARD_ID_MAX_SIZE);
   getRxBoardId(rxBoardId, BOARD_ID_MAX_SIZE);
+  // TYPE parameters
+  char type[TYPE_MAX_SIZE];
+  getType(type);
   // FUNC parameters
   char func[FUNC_MAX_SIZE];
   getFunc(func);
@@ -266,6 +269,14 @@ bool Action::validate()
   else if (!compareCharArray(rxBoardId, BOARD_ID, sizeof(rxBoardId), sizeof(BOARD_ID)) &&
            !compareCharArray(txBoardId, BOARD_ID, sizeof(txBoardId), sizeof(BOARD_ID)))
      this->validated = false;
+  // TYPE validate
+  else if (!compareCharArray(type, TYPE_NORMAL_L , sizeof(type), sizeof(TYPE_NORMAL_L) ) &&
+           !compareCharArray(type, TYPE_TWITTER_L, sizeof(type), sizeof(TYPE_TWITTER_L)) &&
+           !compareCharArray(type, TYPE_ARDUINO_L, sizeof(type), sizeof(TYPE_ARDUINO_L)) &&
+           !compareCharArray(type, TYPE_NORMAL_S , sizeof(type), sizeof(TYPE_NORMAL_S) ) &&
+           !compareCharArray(type, TYPE_TWITTER_S, sizeof(type), sizeof(TYPE_TWITTER_S)) &&
+           !compareCharArray(type, TYPE_ARDUINO_S, sizeof(type), sizeof(TYPE_ARDUINO_S)))
+    this->validated = false;
   // FUNC validate
   else if (!compareCharArray(func, FUNC_GET_L, sizeof(func), sizeof(FUNC_GET_L)) &&
            !compareCharArray(func, FUNC_SET_L, sizeof(func), sizeof(FUNC_SET_L)) &&

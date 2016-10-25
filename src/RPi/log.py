@@ -21,7 +21,7 @@ LOG_CRS = 5   # crash
 LOG_OFF = 6   # off
 
 # LOG_LEVEL
-LOG_LVL = LOG_DEB	# the current log level
+LOG_LVL = LOG_DET	# the current log level
 
 # LOG_PATHS
 LOG_PATH = 'log'

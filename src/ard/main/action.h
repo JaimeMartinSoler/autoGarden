@@ -53,9 +53,17 @@ const long int ID_MAX = (((long int)ASCII_PRINT_RANGE) * ((long int)ASCII_PRINT_
 #define BOARD_ID "A0"
 #define BOARD_R0_ID "R0"
 
-// mode
-#define MODE_MAX_SIZE 3 // including null char '\0'
-#define MODE_POS 3      // position in payload char array
+// Type
+#define TYPE_MAX_SIZE 3 // including null char '\0'
+#define TYPE_POS 3      // position in payload char array
+// Type Parameters: Long (length<=2)
+#define TYPE_NORMAL_L "NR"
+#define TYPE_TWITTER_L "TW"
+#define TYPE_ARDUINO_L "AR"
+// Function Parameters: Short (length=1)
+#define TYPE_NORMAL_S "N"
+#define TYPE_TWITTER_S "T"
+#define TYPE_ARDUINO_S "A"
 
 // Function Parameters
 #define FUNC_MAX_SIZE 5   // including null char '\0'
@@ -123,7 +131,7 @@ class Action
       void getId(char id[], int charArray = ID_MAX_SIZE);
       void getTxBoardId(char txBoardId[], int charArray = BOARD_ID_MAX_SIZE);
       void getRxBoardId(char rxBoardId[], int charArray = BOARD_ID_MAX_SIZE);
-      void getMode(char mode[], int charArray = MODE_MAX_SIZE);
+      void getType(char mode[], int charArray = TYPE_MAX_SIZE);
       void getFunc(char func[], int charArray = FUNC_MAX_SIZE);
       int getParamNum();
       void getWpar(char wpar[], int charArray = WPAR_MAX_SIZE);

@@ -104,8 +104,10 @@ bool RXTX::rx(RF24 &radio, bool rxLoop)
 // return: true(ACK_RX), false(NO_ACK_RX)
 bool RXTX::tx(RF24 &radio, Action &action)
 {
-  if (!action.validated)
+  if (!action.validated) {
+    LOG(LOG_WAR, F("<<< WARNING: Action NOT TX, Action NOT Validated >>>"));
     return false;
+  }
     
   // wait a bit for the receiver to get ready for RX mode
   delay(20);
@@ -122,12 +124,12 @@ bool RXTX::tx(RF24 &radio, Action &action)
   // No ACK received:
   action.txAttempts++;
   if (!radio.write(&charMsgTX, min(Sensors::NRF24_PAYLOAD_MAX_SIZE,sizeof(charMsgTX)-1))){  // -1, to prevent '\0' from tx
-    LOG(LOG_WAR, F("  ACK_RX: NO"));
+    LOG(LOG_WAR, F("<<< WARNING:  ACK_RX: NOT received >>>"));
     return false;
-    
+  }
   // ACK_RX:
   // issue!!!: when a row of msg is read, after TX stops, RX keeps reading ACKs for 2-3 times
-  } else {
+  else {
     action.txSuccess++;
     
     // ACK_RX (ACK payload OK):
@@ -135,11 +137,11 @@ bool RXTX::tx(RF24 &radio, Action &action)
     if (radio.isAckPayloadAvailable()) {
       char charAckRX[Sensors::NRF24_PAYLOAD_ACK_MAX_SIZE];
       radio.read(&charAckRX, sizeof(charAckRX));
-      LOG(LOG_INF, F("  ACK_RX: YES (payload=\""), String(charAckRX), F("\")"));
-      
+      LOG(LOG_INF, F("  ACK_RX: YES (ack_payload=\""), String(charAckRX), F("\")"));
+    } 
     // ACK_RX (ACK payload <empty>): 
-    } else {
-      LOG(LOG_INF, F("  ACK_RX: YES (payload=<empty>)"));
+    else {
+      LOG(LOG_INF, F("  ACK_RX: YES (ack_payload=<empty>)"));
     }
     return true;
   }
@@ -198,7 +200,7 @@ bool RXTX::exec(RF24 &radio, Action &action, bool &execActionChanged)
               Action::compareCharArray(wparId, WPARID_TEMP_LM35_S, sizeof(wparId), sizeof(WPARID_TEMP_LM35_S))) {
             float tempC = Sensors::getTempLM35();
             LOG(LOG_DET, F("  Action to execute: \""), String(action.text), F("\" successfully executed"));
-            action.set("XYZ,"+String(BOARD_ID)+","+String(BOARD_R0_ID)+",UN,SET,TEMP,AIR,"+String(tempC));
+            action.set("XYZ,"+String(BOARD_ID)+","+String(BOARD_R0_ID)+",NR,SET,TEMP,AIR,"+String(tempC));
             execActionChanged = true;
             return true;
           }
@@ -209,13 +211,15 @@ bool RXTX::exec(RF24 &radio, Action &action, bool &execActionChanged)
   
   // TX: "III,<AO>,RR,MM,..."
   else if (Action::compareCharArray(txBoardId, BOARD_ID, sizeof(txBoardId), sizeof(BOARD_ID))) {
-    if (tx(radio, action)) {
+    tx(radio, action);
+    radio.startListening();
+    if (action.txSuccess>0) {
       LOG(LOG_DET, F("  Action to execute: \""), String(action.text), F("\" successfully executed"));
       return true;
     }
   }
   
-  LOG(LOG_WAR, F("  <<<WARNING: Action to execute: \""), String(action.text), F("\" was NOT successfully executed>>>"));
+  LOG(LOG_WAR, F("<<< WARNING: Action to execute: \""), String(action.text), F("\" was NOT successfully executed >>>"));
   return false;
 }
 
@@ -232,7 +236,7 @@ bool RXTX::generateAction(Action &action)
     float tempC = Sensors::getTempLM35();
     if (tempC >= GA_TEMP_MAX) {
       ga_temp_max_action_last = (signed long)millis();
-      action.set("000,"+String(BOARD_ID)+","+String(BOARD_R0_ID)+",UN,SET,TEMP,AIR,"+String(tempC));
+      action.set("000,"+String(BOARD_ID)+","+String(BOARD_R0_ID)+",AR,SET,TEMP,AIR,"+String(tempC));
       LOG(LOG_INF, F("  Generate Action: tempC >= GA_TEMP_MAX"));
       return true;
     }

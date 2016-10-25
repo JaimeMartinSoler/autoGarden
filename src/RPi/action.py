@@ -36,16 +36,24 @@ ID_POS = 0      # position in payload char array
 ID_SIZE = 3
 ID_MAX = (ASCII_PRINT_RANGE * ASCII_PRINT_RANGE * ASCII_PRINT_RANGE) - 1
 
-# board ID
+# Board ID
 BOARD_ID_MAX_SIZE = 2 # unlike C++, here we do NOT have to include the null char '\0')
 BOARD_ID_TX_POS = 1   # position in payload char array
 BOARD_ID_RX_POS = 2   # position in payload char array
 BOARD_ID ='R0'
 BOARD_A0_ID = 'A0'
 
-# mode
-MODE_MAX_SIZE = 2 # unlike C++, here we do NOT have to include the null char '\0')
-MODE_POS = 3      # position in payload char array
+# Type
+TYPE_MAX_SIZE = 2 # unlike C++, here we do NOT have to include the null char '\0')
+TYPE_POS = 3      # position in payload char array
+# Type Parameters: Long (length<=2)
+TYPE_NORMAL_L = 'NR'
+TYPE_TWITTER_L = 'TW'
+TYPE_ARDUINO_L = 'AR'
+# Type Parameters: Short (length=1)
+TYPE_NORMAL_S = 'N'
+TYPE_TWITTER_S = 'T'
+TYPE_ARDUINO_S = 'A'
 
 # Function Parameters
 FUNC_MAX_SIZE = 4   # unlike C++, here we do NOT have to include the null char '\0')
@@ -56,7 +64,7 @@ FUNC_SET_L = 'SET'
 # Function Parameters: Short (length=1)
 FUNC_GET_S = 'G'
 FUNC_SET_S = 'S'
-   
+
 # Weather Parameters
 WPAR_MAX_SIZE = 4   # unlike C++, here we do NOT have to include the null char '\0')
 WPAR_POS = 5        # position in payload char array
@@ -147,10 +155,15 @@ class Action:
 
 	# Parameters Payload
 	text = [None]*ACTION_MAX_SIZE	# char array with the action message text
+	validated = False  				# true: paramters are OK, false: parameters NOT_OK
+	# Parameters RX
+	rxReadyToExec = False	# true: action ready to be executed, false: not ready
+	rxExec = 0				# times the action has been executed
+	rxTweet = 0				# times the action has been tweet(ed) (or managed by twitter module)
 	# Parameters TX
-	validated = False  	# true: paramters are OK false: parameters NOT_OK
-	txSuccess = 0 		# number of times this action was successfuly tx
-	txAttempts = 0		# number of times this action was attampted to be tx
+	txReadyToTx	= False		# true: action ready to be transmitted, false: not ready
+	txSuccess = 0 			# number of times this action was successfuly tx
+	txAttempts = 0			# number of times this action was attampted to be tx
 	
 	
 	
@@ -170,18 +183,30 @@ class Action:
 		if (text != None):
 			self.text = text
 			self.validate()
+			self.rxReadyToExec = False
+			self.rxExec = 0
+			self.rxTweet = 0
+			self.txReadyToTx = False
 			self.txSuccess = 0
 			self.txAttempts = 0
 		# Setter Copy: set by actionCopy
 		elif (copy != None):
 			self.text = copy.text
 			self.validated = copy.validated
+			self.rxReadyToExec = copy.rxReadyToExec
+			self.rxExec = copy.rxExec
+			self.rxTweet = copy.rxTweet
+			self.txReadyToTx = copy.txReadyToTx
 			self.txSuccess = copy.txSuccess
 			self.txAttempts = copy.txAttempts
 		# Setter Default:
 		else:
 			self.text = ''
 			self.validated = False
+			self.rxReadyToExec = False
+			self.rxExec = 0
+			self.rxTweet = 0
+			self.txReadyToTx = False
 			self.txSuccess = 0
 			self.txAttempts = 0
 		
@@ -196,8 +221,8 @@ class Action:
 		return self.getStringInPos(BOARD_ID_TX_POS)
 	def getRxBoardId(self):
 		return self.getStringInPos(BOARD_ID_RX_POS)
-	def getMode(self):
-		return self.getStringInPos(MODE_POS)
+	def getType(self):
+		return self.getStringInPos(TYPE_POS)
 	def getFunc(self):
 		return self.getStringInPos(FUNC_POS)
 	def getParamNum(self):
@@ -226,8 +251,9 @@ class Action:
 	# validate()
 	def validate(self):
 		
-		# FUNC parameter
+		# parameters
 		func = self.getFunc()
+		type = self.getType()
 		
 		# ID validate
 		if (len(self.getId()) != ID_MAX_SIZE):
@@ -236,6 +262,15 @@ class Action:
 		elif (
 		(self.getTxBoardId() != BOARD_ID) and
 		(self.getRxBoardId() != BOARD_ID)):
+			self.validated = False
+		# TYPE validate
+		elif (
+		(type != TYPE_NORMAL_L) and
+		(type != TYPE_TWITTER_L) and
+		(type != TYPE_ARDUINO_L) and
+		(type != TYPE_NORMAL_S) and
+		(type != TYPE_TWITTER_S) and 
+		(type != TYPE_ARDUINO_S)):
 			self.validated = False
 		# FUNC validate
 		elif (
