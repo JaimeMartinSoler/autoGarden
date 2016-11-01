@@ -22,8 +22,9 @@ import time
 import spidev
 from log import LOG, LOG_DEB, LOG_DET, LOG_INF, LOG_WAR, LOG_ERR, LOG_CRS, LOG_OFF
 from action import Action, idAdd
-from rxtx import rx, setup_NRF24, manageTxNormalAction
+from rxtx import *
 import thread
+import signal
 
 
 
@@ -45,6 +46,11 @@ def setup_GPIO():
 	GPIO.setmode(GPIO.BCM)
 	GPIO.setwarnings(False)
 
+# -------------------------------------
+# signalHandler(signum, frame)
+def signalHandler(signum, frame):
+	LOG(LOG_ERR, '<<< Program finished by user, closing DB >>>\n', logPreLn=True)
+	DB_CONN.close()
 	
 	
 
@@ -52,12 +58,15 @@ def setup_GPIO():
 # SETUP
 setup_GPIO()
 setup_NRF24(radioMain)
- 
- 
+setup_DB()
+signal.signal(signal.SIGINT, signalHandler)
+
  
  
 # --------------------------------------------------------------
 # MAIN LOOP
+
+
 
 # manageTxNormalAction LOOP
 try:

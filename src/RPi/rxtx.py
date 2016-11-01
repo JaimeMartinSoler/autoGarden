@@ -1,6 +1,6 @@
 
 # ----------------------------------------------------------------------
-# --- rxtx.cpp                                                       ---
+# --- rxtx.py                                                        ---
 # ----------------------------------------------------------------------
 # --- High level static functions to deal with RX, TX and also       ---
 # --- generation and execution of received actions                   ---
@@ -14,12 +14,13 @@
 # ----------------------------------------------------------------------
 # IMPORTS
 from lib_nrf24 import NRF24
-import time
 import spidev
+import os
+import time
+import sqlite3
 from log import LOG, LOG_DEB, LOG_DET, LOG_INF, LOG_WAR, LOG_ERR, LOG_CRS, LOG_OFF
 from action import *
-from glob import rxAction, rxNormalAction, rxTwitterAction, rxArduinoAction, txNormalAction, txTwitterAction
-
+from glob import *
 
 
 
@@ -109,12 +110,10 @@ def rx(radio, rxLoop=False):
 		while (not radio.available()):
 			# Check Normal Action to be transmitted, managed from manageNormalAction thread (TODO)
 			if (txNormalAction.txReadyToTx and txNormalAction.txSuccess<=0):
-				tx(radio,txNormalAction)
-				radio.startListening()
+				tx(radio,txNormalAction)	# startListeningAuto=True by default
 			# Check Normal Action to be transmitted, managed from twitterManagerLoop thread (TODO)
 			elif (txTwitterAction.txReadyToTx and txTwitterAction.txSuccess<=0):
-				tx(radio,txTwitterAction)
-				radio.startListening()
+				tx(radio,txTwitterAction)	# startListeningAuto=True by default
 			# sleep
 			time.sleep(0.010)
 
@@ -162,7 +161,7 @@ def rx(radio, rxLoop=False):
 # tx(NRF24, Action)
 # Transmit the passed Action
 # return: true(ACK_RX), false(NO_ACK_RX)
-def tx(radio, action):
+def tx(radio, action, startListeningAuto=True):
 
 	# check if action is validated
 	if (not action.validated):
@@ -182,6 +181,8 @@ def tx(radio, action):
 	action.txAttempts += 1
 	if(radio.write(intMsgTx) == 0):
 		LOG(LOG_WAR, "<<< WARNING:  ACK_RX: NOT received >>>")
+		if (startListeningAuto):
+			radio.startListening()
 		return False
 	
 	# ACK_RX, return True:
@@ -199,6 +200,8 @@ def tx(radio, action):
 		else:
 			LOG(LOG_INF, "  ACK_RX: YES (ack_payload=<empty>)")
 		# return True
+		if (startListeningAuto):
+			radio.startListening()
 		return True
 		
 
@@ -225,21 +228,21 @@ def execute(radio, action):
 	if (action.getRxBoardId()==BOARD_ID):
 
 		# "III,TT,<AO>,MM,<SET>,..."
-		LOG(LOG_DET, "    function: \"{}\"".format(action.getFunc()))
-		if (action.getFunc()==FUNC_SET_L or action.getFunc()==FUNC_SET_S):
+		LOG(LOG_DET, "    function: \"{}\"".format(action.getFunc_L()))
+		if (action.getFunc_L()==FUNC_SET_L):
 
 			# "III,TT,<AO>,MM,<SET>,WWWW,IIII"
 			LOG(LOG_DET, "    paramNum: {}".format(action.getParamNum()))
 			if (action.getParamNum()==3):
 
 				# "III,TT,<AO>,MM,<SET>,<T/TEMP>,IIII"
-				LOG(LOG_DET, "    weather param: \"{}\"".format(action.getWpar()))
-				if (action.getWpar()==WPAR_TEMP_L or action.getWpar()==WPAR_TEMP_S):
+				LOG(LOG_DET, "    weather param: \"{}\"".format(action.getWpar_L()))
+				if (action.getWpar_L()==WPAR_TEMP_L):
 
 					# "III,TT,<AO>,MM,<SET>,<T/TEMP>,<A/AIR>"
-					LOG(LOG_DET, "    weather param id: \"{}\"".format(action.getWparId()))
-					if (action.getWparId()==WPARID_TEMP_LM35_L or action.getWparId()==WPARID_TEMP_LM35_S):
-						LOG(LOG_INF, "    OK, action executed")
+					LOG(LOG_DET, "    weather param id: \"{}\"".format(action.getWparId_L()))
+					if (action.getWparId_L()==WPARID_TEMP_LM35_L):
+						DB_insert(action.getType_L(), action.getWpar_L(), action.getWparId_L(), valueRea=float(action.getValue()))
 						action.rxExec += 1
 						return True
 
@@ -255,7 +258,43 @@ def execute(radio, action):
 	LOG(LOG_WAR, "<<< WARNING: Action to execute: \"{}\" was NOT successfully executed >>>".format(action.text));
 	return False
 
+	
 
+
+# -------------------------------------
+# setup_DB()
+def setup_DB():
+	if (not os.path.exists(DB_PATH)):
+		os.makedirs(DB_PATH)
+	DB_CONN = sqlite3.connect(DB_FULL_PATH)
+	db_cursor = DB_CONN.cursor()
+	db_cursor.execute('''
+		CREATE TABLE IF NOT EXISTS WEATHER (
+			ID INTEGER PRIMARY KEY AUTOINCREMENT,
+			DATE TEXT NOT NULL,
+			TIME TEXT NOT NULL,
+			TYPE TEXT NOT NULL,
+			WPAR TEXT NOT NULL,
+			WPARID TEXT NOT NULL,
+			VALUE_INT INTEGER,
+			VALUE_REA REAL,
+			VALUE_STR TEXT
+		);
+	''')
+	DB_CONN.commit()
+	#DB_CONN.close()
+
+
+# -------------------------------------
+# DB_insert(type)
+def DB_insert(type, wpar, wparId, valueInt=None, valueRea=None, valueStr=None):
+	db_row = (time.strftime('%Y-%m-%d'), time.strftime('%H:%M:%S'), type, wpar, wparId, valueInt, valueRea, valueStr)
+	db_cursor = DB_CONN.cursor()
+	db_cursor.execute('INSERT INTO WEATHER(DATE,TIME,TYPE,WPAR,WPARID,VALUE_INT,VALUE_REA,VALUE_STR) VALUES (?,?,?,?,?,?,?,?)', db_row)
+	DB_CONN.commit()
+
+	
+	
 
 # -------------------------------------
 # generateAction(Action)

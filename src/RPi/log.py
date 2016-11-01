@@ -26,6 +26,7 @@ LOG_LVL = LOG_DET	# the current log level
 # LOG_PATHS
 LOG_PATH = 'log'
 LOG_FILE = 'log_'+time.strftime('%Y%m%d')+'.txt'
+LOG_FULL_PATH = LOG_PATH+'/'+LOG_FILE
 LOG_TIME_FORMAT = '[%Y-%m-%d %H:%M:%S]: '
 
 
@@ -49,7 +50,7 @@ def LOG(logLevel, logText, logPrint=True, logFile=True, logPrintDate=True, logFi
 		if (logFile):
 			if not os.path.exists(LOG_PATH):
 				os.makedirs(LOG_PATH)
-			f = open(LOG_PATH+'/'+LOG_FILE, 'a')
+			f = open(LOG_FULL_PATH, 'a')
 			if (logFileDate):
 				f.write(preLn+time.strftime(LOG_TIME_FORMAT)+logText+'\n')
 			else:

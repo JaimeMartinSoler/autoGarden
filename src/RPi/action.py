@@ -223,14 +223,86 @@ class Action:
 		return self.getStringInPos(BOARD_ID_RX_POS)
 	def getType(self):
 		return self.getStringInPos(TYPE_POS)
+	def getType_S(self):
+		type = self.getType()
+		if (len(type)>1):
+			if (type==TYPE_NORMAL_L):
+				return TYPE_NORMAL_S
+			elif (type==TYPE_TWITTER_L):
+				return TYPE_TWITTER_S
+			elif (type==TYPE_ARDUINO_L):
+				return TYPE_ARDUINO_S
+		else:
+			return type
+	def getType_L(self):
+		type = self.getType()
+		if (len(type)<=1):
+			if (type==TYPE_NORMAL_S):
+				return TYPE_NORMAL_L
+			elif (type==TYPE_TWITTER_S):
+				return TYPE_TWITTER_L
+			elif (type==TYPE_ARDUINO_S):
+				return TYPE_ARDUINO_L
+		else:
+			return type
 	def getFunc(self):
 		return self.getStringInPos(FUNC_POS)
+	def getFunc_S(self):
+		func = self.getFunc()
+		if (len(func)>1):
+			if (func==FUNC_GET_L):
+				return FUNC_GET_S
+			elif (func==FUNC_SET_L):
+				return FUNC_SET_S
+		else:
+			return func
+	def getFunc_L(self):
+		func = self.getFunc()
+		if (len(func)<=1):
+			if (func==FUNC_GET_S):
+				return FUNC_GET_L
+			elif (func==FUNC_SET_S):
+				return FUNC_SET_L
+		else:
+			return func
 	def getParamNum(self):
 		return max(0, len(self.text.split(ACTION_SEPARATOR))-FIXED_PARAMETERS)
 	def getWpar(self):
 		return self.getStringInPos(WPAR_POS)
+	def getWpar_S(self):
+		wpar = self.getWpar()
+		if (len(wpar)>1):
+			if (wpar==WPAR_TEMP_L):
+				return WPAR_TEMP_S
+			elif (wpar==WPAR_HUMI_L):
+				return WPAR_HUMI_S
+		else:
+			return wpar
+	def getWpar_L(self):
+		wpar = self.getWpar()
+		if (len(wpar)<=1):
+			if (wpar==WPAR_TEMP_S):
+				return WPAR_TEMP_L
+			elif (wpar==WPAR_HUMI_S):
+				return WPAR_HUMI_L
+		else:
+			return wpar
 	def getWparId(self):
 		return self.getStringInPos(WPARID_POS)
+	def getWparId_S(self):
+		wparId = self.getWparId()
+		if (len(wparId)>1):
+			if (wparId==WPARID_TEMP_LM35_L):
+				return WPARID_TEMP_LM35_S
+		else:
+			return wparId
+	def getWparId_L(self):
+		wparId = self.getWparId()
+		if (len(wparId)<=1):
+			if (wparId==WPARID_TEMP_LM35_S):
+				return WPARID_TEMP_LM35_L
+		else:
+			return wparId
 	def getValue(self):
 		return self.getStringInPos(VALUE_POS)
 	# getStringInPos (it checks if we go out of bounds)
