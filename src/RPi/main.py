@@ -25,6 +25,7 @@ from action import Action, idAdd
 from rxtx import *
 import thread
 import signal
+from glob import *
 
 
 
@@ -53,6 +54,7 @@ def signalHandler(signum, frame):
 	DB_CONN.close()
 	
 	
+	
 
 # --------------------------------------------------------------
 # SETUP
@@ -73,7 +75,7 @@ try:
    thread.start_new_thread(manageTxNormalAction,())
 except:
    print "Error: unable to start thread"
-	
+
 # RX LOOP
 rx(radioMain, rxLoop=True)
 

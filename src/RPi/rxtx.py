@@ -41,6 +41,11 @@ PAYLOAD_ACK_MAX_SIZE = 32	# defined by NRF24 datasheet
 SPIDEV_FILE = 0 
 PIN_CE_BCM = 17
 
+# manageTxNormalAction parameters
+TEMP_AIR_GET_MINUTES = 1.0
+global TEMP_AIR_GET_MINUTES_LAST_JULIAN
+TEMP_AIR_GET_MINUTES_JULIAN = TEMP_AIR_GET_MINUTES/(1440.0)
+
 
 
 
@@ -271,8 +276,7 @@ def setup_DB():
 	db_cursor.execute('''
 		CREATE TABLE IF NOT EXISTS WEATHER (
 			ID INTEGER PRIMARY KEY AUTOINCREMENT,
-			DATE TEXT NOT NULL,
-			TIME TEXT NOT NULL,
+			DATETIME TEXT NOT NULL,
 			TYPE TEXT NOT NULL,
 			WPAR TEXT NOT NULL,
 			WPARID TEXT NOT NULL,
@@ -288,32 +292,45 @@ def setup_DB():
 # -------------------------------------
 # DB_insert(type)
 def DB_insert(type, wpar, wparId, valueInt=None, valueRea=None, valueStr=None):
-	db_row = (time.strftime('%Y-%m-%d'), time.strftime('%H:%M:%S'), type, wpar, wparId, valueInt, valueRea, valueStr)
+	db_row = (nowDatetime(), type, wpar, wparId, valueInt, valueRea, valueStr)
 	db_cursor = DB_CONN.cursor()
-	db_cursor.execute('INSERT INTO WEATHER(DATE,TIME,TYPE,WPAR,WPARID,VALUE_INT,VALUE_REA,VALUE_STR) VALUES (?,?,?,?,?,?,?,?)', db_row)
+	db_cursor.execute('INSERT INTO WEATHER(DATETIME,TYPE,WPAR,WPARID,VALUE_INT,VALUE_REA,VALUE_STR) VALUES (?,?,?,?,?,?,?);', db_row)
 	DB_CONN.commit()
 
-	
-	
 
 # -------------------------------------
-# generateAction(Action)
+# manageTxNormalAction()
 # Checks the status of the sensors and autonomously generates and Action, if needed
 # This function is meant to be executed in the RX wait loop every few milliseconds
 # return: true(action generated), false(no action generated)
 def manageTxNormalAction():
-	# setup
 	time.sleep(3.000)
+	# create a DB connection for this thread
+	DB_CONN_N = sqlite3.connect(DB_FULL_PATH)
+	db_cursor_n = DB_CONN_N.cursor()
+	# setup: time parameters
+	db_cursor_n.execute('SELECT * FROM WEATHER WHERE WPAR=\'TEMP\' AND WPARID=\'AIR\' ORDER BY DATETIME DESC LIMIT 1;')
+	TEMP_AIR_GET_MINUTES_LAST_JULIAN = datetimeToJulian(db_cursor_n.fetchone()[1])
+	nowJulianDT = nowJulian()
+	# setup: id counters
 	stringBaseId = "000"
 	countId = 0
-	txNormalAction.set(stringBaseId+",R0,A0,NR,GET,TEMP,AIR")
+	# setup: create a fake (txSuccess=1) to avoid tx and jump wait loop
+	txNormalAction.txSuccess = 1
 	txNormalAction.txReadyToTx = True
 	# loop
 	while(True):
+		# wait for previous action to be transmitted
 		while(txNormalAction.txReadyToTx and txNormalAction.txSuccess<=0):
 			time.sleep(0.100)
-		countId += 1
-		txNormalAction.set(idAdd(stringBaseId,countId)+",R0,A0,NR,GET,TEMP,AIR")
-		txNormalAction.txReadyToTx = True
-		time.sleep(3.0)
-		
+		nowJulianDT = nowJulian()
+		# TEMP_AIR management
+		if ((nowJulianDT - TEMP_AIR_GET_MINUTES_LAST_JULIAN) >= TEMP_AIR_GET_MINUTES_JULIAN):
+			TEMP_AIR_GET_MINUTES_LAST_JULIAN = nowJulianDT
+			txNormalAction.set(idAdd(stringBaseId,countId)+",R0,A0,NR,GET,TEMP,AIR")
+			txNormalAction.txReadyToTx = True
+			countId += 1
+		time.sleep(1.0)
+	# close DB
+	DB_CONN_N.close()
+
