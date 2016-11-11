@@ -43,6 +43,9 @@ const long int ASCII_PRINT_RANGE = ((long int)ASCII_PRINT_MAX - (long int)ASCII_
 // ID
 #define ID_MAX_SIZE 4 // including null char '\0'
 #define ID_POS 0      // position in payload char array
+                      // this must be 0, if we change it we would have to change more code,
+                      // the reason is that ID admits ',' as value but also is the separator,
+                      // so ID is treated specially in some parts of the code in this class
 const short int ID_SIZE = 3;
 const long int ID_MAX = (((long int)ASCII_PRINT_RANGE) * ((long int)ASCII_PRINT_RANGE) * ((long int)ASCII_PRINT_RANGE) - 1);
 
