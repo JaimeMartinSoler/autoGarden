@@ -33,7 +33,9 @@ ASCII_PRINT_RANGE = ASCII_PRINT_MAX - ASCII_PRINT_MIN + 1
 # ID
 ID_MAX_SIZE = 3 # unlike C++, here we do NOT have to include the null char '\0')
 ID_POS = 0      # position in payload char array
-ID_SIZE = 3
+		# this must be 0, if we change it we would have to change more code,
+		# the reason is that ID admits ',' as value but also is the separator,
+		# so ID is treated specially in some parts of the code in this class
 ID_MAX = (ASCII_PRINT_RANGE * ASCII_PRINT_RANGE * ASCII_PRINT_RANGE) - 1
 
 # Board ID
