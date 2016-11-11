@@ -22,6 +22,7 @@ import signal
 from glob import *
 from rxtx import *
 from normalActionManager import *
+from twitterActionManager import *
 from DBmanager import *
 
 
@@ -35,9 +36,11 @@ def main():
 	# create threads
 	thread_rx = threading.Thread(target=rx)
 	thread_txNormalActionManager = threading.Thread(target=txNormalActionManager)
+	thread_txTwitterActionManager = threading.Thread(target=txTwitterActionManager)
 	# start threads
 	thread_rx.start()
 	thread_txNormalActionManager.start()
+	thread_txTwitterActionManager.start()
 
 	# wait loop
 	try:
@@ -51,6 +54,7 @@ def main():
 		# join (wait) threads
 		thread_rx.join()
 		thread_txNormalActionManager.join()
+		thread_txTwitterActionManager.join()
 		# close DB
 		DBclose()
 		LOG(LOG_ERR, "KeyboardInterrupt: Threads and DB successfully closed")
