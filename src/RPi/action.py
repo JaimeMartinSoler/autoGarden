@@ -363,3 +363,5 @@ class Action:
 	# split text into a list, respecting that ID field might contain ACTION_SEPARATOR characters
 	def textToList(self, separator=ACTION_SEPARATOR):
 		return [self.text[:ID_MAX_SIZE]] + self.text[ID_MAX_SIZE+1:].split(ACTION_SEPARATOR)
+
+	
