@@ -21,6 +21,14 @@ from jdcal import gcal2jd, jd2gcal
 
 
 # ----------------------------------------------------------------------
+# CLASS PROCESS
+class Process:
+	isAlive = True
+	def __init__(self):
+		self.isAlive = True
+
+
+# ----------------------------------------------------------------------
 # PARAMETERS
 
 # Actions
@@ -31,12 +39,8 @@ rxArduinoAction = Action()	# Action for RX Arduino actions, urgents messages sen
 txNormalAction = Action()	# Action for TX Normal actions, requests from RPi DB,timers checking module
 txTwitterAction = Action()	# Action for TX Twitter actions, requests from RPi Twitter checking module
 
-#  DB parameteres
-DB_PATH = 'db'
-DB_NAME = 'autoGarden.db'
-DB_FULL_PATH = DB_PATH + '/' + DB_NAME
-DB_CONN = sqlite3.connect(DB_FULL_PATH)
-DB_CONN_N = 0
+# Process
+PROCESS = Process()
 
 
 

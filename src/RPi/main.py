@@ -12,70 +12,50 @@
 # ----------------------------------------------------------------------
 
 
-
-
 # --------------------------------------------------------------
 # IMPORTS
-import RPi.GPIO as GPIO
-from lib_nrf24 import NRF24
 import time
-import spidev
+import signal
 from log import LOG, LOG_DEB, LOG_DET, LOG_INF, LOG_WAR, LOG_ERR, LOG_CRS, LOG_OFF
-from action import Action, idAdd
-from rxtx import *
-import thread
+import threading
 import signal
 from glob import *
+from rxtx import *
+from normalActionManager import *
+from DBmanager import *
 
 
 
 
-# --------------------------------------------------------------
-# PARAMETERS
-
-radioMain = NRF24(GPIO, spidev.SpiDev())
-
-
-
-# --------------------------------------------------------------
-# FUNCTIONS
-	
-# -------------------------------------
-# setup_NRF24(NRF24)
-def setup_GPIO():
-	# GPIO as BCM mode as per lib_nrf24 requires
-	GPIO.setmode(GPIO.BCM)
-	GPIO.setwarnings(False)
-
-# -------------------------------------
-# signalHandler(signum, frame)
-def signalHandler(signum, frame):
-	LOG(LOG_ERR, '<<< Program finished by user, closing DB >>>\n', logPreLn=True)
-	DB_CONN.close()
-	
-	
-	
-
-# --------------------------------------------------------------
-# SETUP
-setup_GPIO()
-setup_NRF24(radioMain)
-setup_DB()
-signal.signal(signal.SIGINT, signalHandler)
-
- 
- 
 # --------------------------------------------------------------
 # MAIN LOOP
 
+def main():
 
+	# create threads
+	thread_rx = threading.Thread(target=rx)
+	thread_txNormalActionManager = threading.Thread(target=txNormalActionManager)
+	# start threads
+	thread_rx.start()
+	thread_txNormalActionManager.start()
 
-# manageTxNormalAction LOOP
-try:
-   thread.start_new_thread(manageTxNormalAction,())
-except:
-   print "Error: unable to start thread"
+	# wait loop
+	try:
+		while(True):
+			time.sleep(1.0)
+	# close threads and DB if KeyboardInterrupt
+	except KeyboardInterrupt:
+		LOG(LOG_ERR, "KeyboardInterrupt: Closing threads and DB", logPreLn=True)
+		# set PROCESS.isAlive = False
+		PROCESS.isAlive = False
+		# join (wait) threads
+		thread_rx.join()
+		thread_txNormalActionManager.join()
+		# close DB
+		DBclose()
+		LOG(LOG_ERR, "KeyboardInterrupt: Threads and DB successfully closed")
 
-# RX LOOP
-rx(radioMain, rxLoop=True)
-
+		
+# --------------------------------------------------------------
+# MAIN CALL
+main()

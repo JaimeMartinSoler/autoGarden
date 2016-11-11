@@ -13,38 +13,25 @@
 
 # ----------------------------------------------------------------------
 # IMPORTS
+import RPi.GPIO as GPIO
 from lib_nrf24 import NRF24
 import spidev
-import os
 import time
 import sqlite3
 from log import LOG, LOG_DEB, LOG_DET, LOG_INF, LOG_WAR, LOG_ERR, LOG_CRS, LOG_OFF
 from action import *
 from glob import *
+from DBmanager import *
+
 
 
 
 # ----------------------------------------------------------------------
 # PARAMETERS
 
-# NRF24L01 communication
-pipes = [[0xE8, 0xE8, 0xF0, 0xF0, 0xE1], [0xF0, 0xF0, 0xF0, 0xF0, 0xE1]]
-PIPE_R = 1
-PIPE_W = 0
-role = 0
-ROLE_TX = 0
-ROLE_RX = 1
+# NRF24L01
 PAYLOAD_MAX_SIZE = 32		# defined by NRF24 datasheet
 PAYLOAD_ACK_MAX_SIZE = 32	# defined by NRF24 datasheet
-
-# NRF24L01 pins (CE) and spidev file
-SPIDEV_FILE = 0 
-PIN_CE_BCM = 17
-
-# manageTxNormalAction parameters
-TEMP_AIR_GET_MINUTES = 1.0
-global TEMP_AIR_GET_MINUTES_LAST_JULIAN
-TEMP_AIR_GET_MINUTES_JULIAN = TEMP_AIR_GET_MINUTES/(1440.0)
 
 
 
@@ -52,10 +39,26 @@ TEMP_AIR_GET_MINUTES_JULIAN = TEMP_AIR_GET_MINUTES/(1440.0)
 # ----------------------------------------------------------------------
 # FUNCTIONS
 
+# -------------------------------------
+# setup_NRF24(NRF24)
+def setup_GPIO():
+	# GPIO as BCM mode as per lib_nrf24 requires
+	GPIO.setmode(GPIO.BCM)
+	GPIO.setwarnings(False)
 
+	
 # -------------------------------------
 # setup_NRF24(NRF24)
 def setup_NRF24(radio):
+
+	# parameters: NRF24L01 communication
+	pipes = [[0xE8, 0xE8, 0xF0, 0xF0, 0xE1], [0xF0, 0xF0, 0xF0, 0xF0, 0xE1]]
+	PIPE_R = 1
+	PIPE_W = 0
+	# parameters: NRF24L01 pins (CE) and spidev file
+	SPIDEV_FILE = 0 
+	PIN_CE_BCM = 17
+	
 	# NRF24L01 begin
 	radio.begin(SPIDEV_FILE, PIN_CE_BCM)
 	# message and ACK
@@ -74,8 +77,10 @@ def setup_NRF24(radio):
 	# print details
 	radio.printDetails()
 
+
 # -------------------------------------
-# Function intArrayToString(intArray)
+# intArrayToString(intArray)
+# this is used after radio.read(), which returns an array of integer representing a string
 def intArrayToString(intArray = []):
 	s = ''
 	for i in intArray:
@@ -85,6 +90,7 @@ def intArrayToString(intArray = []):
 
 # -------------------------------------
 # Function stringToIntArray(s,size)
+# used to ease the process of radio.write(), which better requires an array of integers
 def stringToIntArray(s,size=PAYLOAD_ACK_MAX_SIZE):
 	charArray = list(s)
 	arrayLen = len(charArray)
@@ -100,19 +106,33 @@ def stringToIntArray(s,size=PAYLOAD_ACK_MAX_SIZE):
 
 # -------------------------------------
 # rx(NRF24, rxLoop=False)
-# Receive and manage radio message, creating and executing the necessary Actions
+# This is the main funcion and is meant to be executed as a thread
+# Receives and manages a radio message, creating and executing the necessary Actions
 # return: True(rx success), False(rx failed)
-def rx(radio, rxLoop=False):
+def rx(rxLoop=True):
 
+	# parameters DBconn, DBcursor, radio
+	DBconn = sqlite3.connect(DB_FULL_PATH)
+	DBcursor = DBconn.cursor()
+	radio = NRF24(GPIO, spidev.SpiDev())
+	
+	# setup DBconn, DBcursor, GPIO
+	setup_GPIO()
+	setup_NRF24(radio)
+	DBsetup(DBconn, DBcursor)
+	
 	# rx loop (if !rxLoop it breaks at the bottom)
-	while (True):
-
+	while (PROCESS.isAlive):
+	
 		# RX start listening TX
 		radio.startListening();
 
 		# RX loop: wait for a message
 		LOG(LOG_INF, "  RX waiting message...");
 		while (not radio.available()):
+			# Check PROCESS.isAlive
+			if (not PROCESS.isAlive):
+				return False
 			# Check Normal Action to be transmitted, managed from manageNormalAction thread (TODO)
 			if (txNormalAction.txReadyToTx and txNormalAction.txSuccess<=0):
 				tx(radio,txNormalAction)	# startListeningAuto=True by default
@@ -139,18 +159,21 @@ def rx(radio, rxLoop=False):
 		rxAction.set(text=strMsgRx)
 		if (rxAction.getRxBoardId()==BOARD_ID):
 			rxType = rxAction.getType()
+			# rxNormalAction
 			if (rxType==TYPE_NORMAL_L or rxType==TYPE_NORMAL_S):
 				rxNormalAction.set(copy=rxAction)
 				rxNormalAction.rxReadyToExec = True
-				execute(radio,rxNormalAction)
+				execute(radio,rxNormalAction, DBconn, DBcursor)
+			# rxTwitterAction
 			elif (rxType==TYPE_TWITTER_L or rxType==TYPE_TWITTER_S):
 				rxTwitterAction.set(copy=rxAction)
 				rxTwitterAction.rxReadyToExec = True
-				execute(radio,rxTwitterAction)
+				execute(radio,rxTwitterAction, DBconn, DBcursor)
+			# rxArduinoAction
 			elif (rxType==TYPE_ARDUINO_L or rxType==TYPE_ARDUINO_S):
 				rxArduinoAction.set(copy=rxAction)
 				rxArduinoAction.rxReadyToExec = True
-				execute(radio,rxArduinoAction)
+				execute(radio,rxArduinoAction, DBconn, DBcursor)
 			else:
 				LOG(LOG_WAR,"<<< WARNING: RX Action mode unknown: \"{}\" >>>".format(rxType))
 
@@ -208,13 +231,13 @@ def tx(radio, action, startListeningAuto=True):
 		if (startListeningAuto):
 			radio.startListening()
 		return True
-		
+
 
 # -------------------------------------	
 # execute(NRF24,Action)
 # Execute and Action, both received and meant to be transmitted
 # return: true(exec success), false(exec failed)
-def execute(radio, action):
+def execute(radio, action, DBconn, DBcursor):
 
 	LOG(LOG_INF, "  Action to execute: \"{}\"".format(action.text));
 
@@ -247,7 +270,7 @@ def execute(radio, action):
 					# "III,TT,<AO>,MM,<SET>,<T/TEMP>,<A/AIR>"
 					LOG(LOG_DET, "    weather param id: \"{}\"".format(action.getWparId_L()))
 					if (action.getWparId_L()==WPARID_TEMP_LM35_L):
-						DB_insert(action.getType_L(), action.getWpar_L(), action.getWparId_L(), valueRea=float(action.getValue()))
+						DBinsert(DBconn, DBcursor, action.getType_L(), action.getWpar_L(), action.getWparId_L(), valueReal=float(action.getValue()))
 						action.rxExec += 1
 						return True
 
@@ -264,73 +287,3 @@ def execute(radio, action):
 	return False
 
 	
-
-
-# -------------------------------------
-# setup_DB()
-def setup_DB():
-	if (not os.path.exists(DB_PATH)):
-		os.makedirs(DB_PATH)
-	DB_CONN = sqlite3.connect(DB_FULL_PATH)
-	db_cursor = DB_CONN.cursor()
-	db_cursor.execute('''
-		CREATE TABLE IF NOT EXISTS WEATHER (
-			ID INTEGER PRIMARY KEY AUTOINCREMENT,
-			DATETIME TEXT NOT NULL,
-			TYPE TEXT NOT NULL,
-			WPAR TEXT NOT NULL,
-			WPARID TEXT NOT NULL,
-			VALUE_INT INTEGER,
-			VALUE_REA REAL,
-			VALUE_STR TEXT
-		);
-	''')
-	DB_CONN.commit()
-	#DB_CONN.close()
-
-
-# -------------------------------------
-# DB_insert(type)
-def DB_insert(type, wpar, wparId, valueInt=None, valueRea=None, valueStr=None):
-	db_row = (nowDatetime(), type, wpar, wparId, valueInt, valueRea, valueStr)
-	db_cursor = DB_CONN.cursor()
-	db_cursor.execute('INSERT INTO WEATHER(DATETIME,TYPE,WPAR,WPARID,VALUE_INT,VALUE_REA,VALUE_STR) VALUES (?,?,?,?,?,?,?);', db_row)
-	DB_CONN.commit()
-
-
-# -------------------------------------
-# manageTxNormalAction()
-# Checks the status of the sensors and autonomously generates and Action, if needed
-# This function is meant to be executed in the RX wait loop every few milliseconds
-# return: true(action generated), false(no action generated)
-def manageTxNormalAction():
-	time.sleep(3.000)
-	# create a DB connection for this thread
-	DB_CONN_N = sqlite3.connect(DB_FULL_PATH)
-	db_cursor_n = DB_CONN_N.cursor()
-	# setup: time parameters
-	db_cursor_n.execute('SELECT * FROM WEATHER WHERE WPAR=\'TEMP\' AND WPARID=\'AIR\' ORDER BY DATETIME DESC LIMIT 1;')
-	TEMP_AIR_GET_MINUTES_LAST_JULIAN = datetimeToJulian(db_cursor_n.fetchone()[1])
-	nowJulianDT = nowJulian()
-	# setup: id counters
-	stringBaseId = "000"
-	countId = 0
-	# setup: create a fake (txSuccess=1) to avoid tx and jump wait loop
-	txNormalAction.txSuccess = 1
-	txNormalAction.txReadyToTx = True
-	# loop
-	while(True):
-		# wait for previous action to be transmitted
-		while(txNormalAction.txReadyToTx and txNormalAction.txSuccess<=0):
-			time.sleep(0.100)
-		nowJulianDT = nowJulian()
-		# TEMP_AIR management
-		if ((nowJulianDT - TEMP_AIR_GET_MINUTES_LAST_JULIAN) >= TEMP_AIR_GET_MINUTES_JULIAN):
-			TEMP_AIR_GET_MINUTES_LAST_JULIAN = nowJulianDT
-			txNormalAction.set(idAdd(stringBaseId,countId)+",R0,A0,NR,GET,TEMP,AIR")
-			txNormalAction.txReadyToTx = True
-			countId += 1
-		time.sleep(1.0)
-	# close DB
-	DB_CONN_N.close()
-
