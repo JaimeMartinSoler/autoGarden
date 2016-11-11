@@ -146,7 +146,8 @@ void Action::getFunc(char func[], int charArraySize) {
 // getParamNum()
 int Action::getParamNum() {
   int separatorsFound = 0;
-  for (int i=0; i<ACTION_MAX_SIZE; i++) {
+  // loop the char array, respecting that ID field (i<=(ID_MAX_SIZE-2)) might contain ACTION_SEPARATOR characters
+  for (int i=ID_MAX_SIZE-1; i<ACTION_MAX_SIZE; i++) {
     if (this->text[i] == ACTION_SEPARATOR)
       separatorsFound++;
   }
@@ -301,13 +302,24 @@ void Action::getCharArrayInPosition(char charArray[], int charArraySize, int pos
   int ansIdx = 0;
   int separatorsFound = 0;
   
-  // loop the char array
-  for (int i=0; i<ACTION_MAX_SIZE; i++) {
-    if ((this->text[i] == ACTION_SEPARATOR) || (this->text[i] == '\0')) {
-      if (++separatorsFound > pos)
-        break;
-    } else if (separatorsFound == pos) {
+  // check text[ID_MAX_SIZE-1] == ACTION_SEPARATOR
+  if (text[ID_MAX_SIZE-1] != ACTION_SEPARATOR) {
+    LOG(LOG_WAR, F("<<<WARNING: in Action::getCharArrayInPosition: text[ID_MAX_SIZE-1] = "), String(text[ID_MAX_SIZE-1]), F(" != ACTION_SEPARATOR>>>"));
+  }
+  
+  // loop the char array, respecting that ID field (i<=(ID_MAX_SIZE-2)) might contain ACTION_SEPARATOR characters
+  if (pos==ID_POS) {
+    for (int i=0; i<ID_MAX_SIZE-1; i++) {
       ans[ansIdx++] = text[i];
+    }
+  } else {
+    for (int i=ID_MAX_SIZE-1; i<ACTION_MAX_SIZE; i++) {
+      if ((this->text[i] == ACTION_SEPARATOR) || (this->text[i] == '\0')) {
+        if (++separatorsFound > pos)
+          break;
+      } else if (separatorsFound == pos) {
+        ans[ansIdx++] = text[i];
+      }
     }
   }
 
