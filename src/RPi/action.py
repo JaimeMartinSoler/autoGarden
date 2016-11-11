@@ -266,7 +266,7 @@ class Action:
 		else:
 			return func
 	def getParamNum(self):
-		return max(0, len(self.text.split(ACTION_SEPARATOR))-FIXED_PARAMETERS)
+		return max(0, len(self.textToList())-FIXED_PARAMETERS)
 	def getWpar(self):
 		return self.getStringInPos(WPAR_POS)
 	def getWpar_S(self):
@@ -307,11 +307,11 @@ class Action:
 		return self.getStringInPos(VALUE_POS)
 	# getStringInPos (it checks if we go out of bounds)
 	def getStringInPos(self, pos, separator=ACTION_SEPARATOR):
-		charArray = self.text.split(ACTION_SEPARATOR)
-		if (pos >= len(charArray)):
+		textFields = self.textToList(separator)
+		if (pos >= len(textFields)):
 			return ''
 		else:
-			return charArray[pos]
+			return textFields[pos]
 		
 		
 		
@@ -356,4 +356,10 @@ class Action:
 			
 		# return self.validate
 		return self.validated
-		
+	
+	
+	# -----------------------
+	# textToList(self, separator=ACTION_SEPARATOR)
+	# split text into a list, respecting that ID field might contain ACTION_SEPARATOR characters
+	def textToList(self, separator=ACTION_SEPARATOR):
+		return [self.text[:ID_MAX_SIZE]] + self.text[ID_MAX_SIZE+1:].split(ACTION_SEPARATOR)
