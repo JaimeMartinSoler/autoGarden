@@ -31,7 +31,7 @@ from twitterPass import APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET
 # txTwitterActionManager()
 # Checks the DB and twitter and generates and action, if needed.
 # This function is meant to be a thread
-def txNormalActionManager():
+def txTwitterActionManager():
 
 	# wait for rx setup
 	time.sleep(1.500)
