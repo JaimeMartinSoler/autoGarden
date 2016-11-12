@@ -134,9 +134,9 @@ void Action::getRxBoardId(char rxBoardId[], int charArraySize) {
   getCharArrayInPosition(rxBoardId, charArraySize, BOARD_ID_RX_POS);
 }
 // getType(char[], int)
-void Action::getType(char mode[], int charArraySize) {
+void Action::getType(char type[], int charArraySize) {
   // default: (int charArraySize = TYPE_MAX_SIZE)
-  getCharArrayInPosition(mode, charArraySize, TYPE_POS);
+  getCharArrayInPosition(type, charArraySize, TYPE_POS);
 }
 // getFunc(char[], int)
 void Action::getFunc(char func[], int charArraySize) {

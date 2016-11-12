@@ -164,7 +164,7 @@ bool RXTX::exec(RF24 &radio, Action &action, bool &execActionChanged)
     return false;
   }
 
-  // RX: "III,TT,<AO>,MM,FFF,..."
+  // RX: BOARD_ID
   char txBoardId[BOARD_ID_MAX_SIZE];
   char rxBoardId[BOARD_ID_MAX_SIZE];
   action.getTxBoardId(txBoardId);
@@ -173,26 +173,30 @@ bool RXTX::exec(RF24 &radio, Action &action, bool &execActionChanged)
   LOG(LOG_DET, F("    rxBoardId: \""), String(rxBoardId), F("\""));
   if (Action::compareCharArray(rxBoardId, BOARD_ID, sizeof(rxBoardId), sizeof(BOARD_ID))) {
     
-    // "III,TT,<AO>,MM,<GET>,..."
+    // TYPE
+    char type[TYPE_MAX_SIZE];
+    action.getType(type);
+    
+    // FUNC
     char func[FUNC_MAX_SIZE];
     action.getFunc(func);
     LOG(LOG_DET, F("    function: \""), String(func), F("\""));
     if (Action::compareCharArray(func,FUNC_GET_L, sizeof(func), sizeof(FUNC_GET_L)) ||
         Action::compareCharArray(func,FUNC_GET_S, sizeof(func), sizeof(FUNC_GET_S))) {
       
-      // "III,TT,<AO>,MM,<GET>,WWWW,IIII"
+      // paramNum
       int paramNum = action.getParamNum();
       LOG(LOG_DET, F("    paramNum: "), String(paramNum));
       if (paramNum==2) {
         
-        // "III,TT,<AO>,MM,<GET>,<T/TEMP>,IIII"
+        // WPAR
         char wpar[WPAR_MAX_SIZE];
         action.getWpar(wpar);
         LOG(LOG_DET, F("    weather param: \""), String(wpar), F("\""));
         if (Action::compareCharArray(wpar, WPAR_TEMP_L, sizeof(wpar), sizeof(WPAR_TEMP_L)) ||
             Action::compareCharArray(wpar, WPAR_TEMP_S, sizeof(wpar), sizeof(WPAR_TEMP_S))) {
           
-          // "III,TT,<AO>,MM,<GET>,<T/TEMP>,<A/AIR>"
+          // WPARID
           char wparId[WPARID_MAX_SIZE];
           action.getWparId(wparId);
           LOG(LOG_DET, F("    weather param id: \""), String(wparId), F("\""));
@@ -200,7 +204,7 @@ bool RXTX::exec(RF24 &radio, Action &action, bool &execActionChanged)
               Action::compareCharArray(wparId, WPARID_TEMP_LM35_S, sizeof(wparId), sizeof(WPARID_TEMP_LM35_S))) {
             float tempC = Sensors::getTempLM35();
             LOG(LOG_DET, F("  Action to execute: \""), String(action.text), F("\" successfully executed"));
-            action.set("XYZ,"+String(BOARD_ID)+","+String(BOARD_R0_ID)+",NR,SET,TEMP,AIR,"+String(tempC));
+            action.set("XYZ,"+String(BOARD_ID)+","+String(BOARD_R0_ID)+","+String(type)+",SET,TEMP,AIR,"+String(tempC));
             execActionChanged = true;
             return true;
           }
@@ -209,7 +213,7 @@ bool RXTX::exec(RF24 &radio, Action &action, bool &execActionChanged)
     }
   }
   
-  // TX: "III,<AO>,RR,MM,..."
+  // TX: BOARD_ID
   else if (Action::compareCharArray(txBoardId, BOARD_ID, sizeof(txBoardId), sizeof(BOARD_ID))) {
     tx(radio, action);
     radio.startListening();

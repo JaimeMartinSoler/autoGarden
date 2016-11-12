@@ -119,13 +119,13 @@ def idAdd(strId, addition):
 def idToInt(strId):
 	v = 0
 	intId = 0
-	if (len(strId) != ID_SIZE):
+	if (len(strId) != ID_MAX_SIZE):
 		return -1
-	for i in range(0,ID_SIZE):
+	for i in range(0,ID_MAX_SIZE):
 		v = ord(strId[i]) - ASCII_PRINT_MIN;
 		if ((v < 0) or (v > ASCII_PRINT_RANGE)):
 			return -1
-		intId += (v * (ASCII_PRINT_RANGE**(ID_SIZE-i-1)))
+		intId += (v * (ASCII_PRINT_RANGE**(ID_MAX_SIZE-i-1)))
 	return intId
 
 
@@ -139,7 +139,7 @@ def intToId(intId):
 	remain = intId
 	if ((intId < 0) or (intId > ID_MAX)):
 		return 'X'
-	for expon in range(ID_SIZE-1,-1,-1):
+	for expon in range(ID_MAX_SIZE-1,-1,-1):
 		divisor = ASCII_PRINT_RANGE**expon
 		strId += chr(ASCII_PRINT_MIN+remain/divisor)
 		remain = remain%divisor

@@ -134,7 +134,7 @@ class Action
       void getId(char id[], int charArray = ID_MAX_SIZE);
       void getTxBoardId(char txBoardId[], int charArray = BOARD_ID_MAX_SIZE);
       void getRxBoardId(char rxBoardId[], int charArray = BOARD_ID_MAX_SIZE);
-      void getType(char mode[], int charArray = TYPE_MAX_SIZE);
+      void getType(char type[], int charArray = TYPE_MAX_SIZE);
       void getFunc(char func[], int charArray = FUNC_MAX_SIZE);
       int getParamNum();
       void getWpar(char wpar[], int charArray = WPAR_MAX_SIZE);

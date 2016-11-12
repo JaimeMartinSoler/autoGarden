@@ -39,7 +39,7 @@ def txNormalActionManager():
 	DBconn = sqlite3.connect(DB_FULL_PATH)
 	DBcursor = DBconn.cursor()
 	# parameters: timers
-	TEMP_AIR_period = 0.1							# TEMP_AIR_period in minutes
+	TEMP_AIR_period = 5.0							# TEMP_AIR_period in minutes
 	TEMP_AIR_period_j = TEMP_AIR_period/(1440.0)	# TEMP_AIR_period in julian
 	TEMP_AIR_last_j = 0.0
 	
