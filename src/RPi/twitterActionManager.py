@@ -41,7 +41,7 @@ def txTwitterActionManager():
 	time.sleep(2.000)
 	
 	# parameters: DBconn, DBcursor
-	DBconn = sqlite3.connect(DB_FULL_PATH)
+	DBconn = sqlite3.connect(DB_PATH_FULL)
 	DBcursor = DBconn.cursor()
 	# parameters: id counters
 	countId = 200000

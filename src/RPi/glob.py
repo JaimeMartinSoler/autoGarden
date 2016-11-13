@@ -8,6 +8,22 @@
 # ----------------------------------------------------------------------
 
 
+# ----------------------------------------------------------------------
+# CLASS PROCESS
+# this has to be called and initialized before importing other files that use PROCESS
+import inspect
+import os
+class Process:
+	isAlive = True
+	mainPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+	def __init__(self):
+		self.isAlive = True
+		mainPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+
+# Process
+PROCESS = Process()
+
+
 
 
 # ----------------------------------------------------------------------
@@ -21,14 +37,6 @@ from jdcal import gcal2jd, jd2gcal
 
 
 # ----------------------------------------------------------------------
-# CLASS PROCESS
-class Process:
-	isAlive = True
-	def __init__(self):
-		self.isAlive = True
-
-
-# ----------------------------------------------------------------------
 # PARAMETERS
 
 # Actions
@@ -38,9 +46,6 @@ rxTwitterAction = Action()	# Action for RX Twitter actions, answers to requests 
 rxArduinoAction = Action()	# Action for RX Arduino actions, urgents messages sent by Arduino
 txNormalAction = Action()	# Action for TX Normal actions, requests from RPi DB,timers checking module
 txTwitterAction = Action()	# Action for TX Twitter actions, requests from RPi Twitter checking module
-
-# Process
-PROCESS = Process()
 
 
 

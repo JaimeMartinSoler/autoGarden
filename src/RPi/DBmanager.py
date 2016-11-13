@@ -22,9 +22,9 @@ from glob import *
 # ----------------------------------------------------------------------
 # PARAMETERS
 
-DB_PATH = 'db'
-DB_NAME = 'autoGarden.db'
-DB_FULL_PATH = DB_PATH + '/' + DB_NAME
+DB_FILE_NAME = 'autoGarden.db'
+DB_PATH_REL = 'db'
+DB_PATH_FULL = PROCESS.mainPath + '/' + DB_PATH_REL + '/' + DB_FILE_NAME
 
 
 
@@ -35,10 +35,10 @@ DB_FULL_PATH = DB_PATH + '/' + DB_NAME
 # -------------------------------------
 # DBsetup(DBconn=None, DBcursor=None)
 def DBsetup(DBconn=None, DBcursor=None):
-	if (not os.path.exists(DB_PATH)):
-		os.makedirs(DB_PATH)
+	if (not os.path.exists(PROCESS.mainPath + '/' + DB_PATH_REL)):
+		os.makedirs(PROCESS.mainPath + '/' + DB_PATH_REL)
 	if (DBconn==None):
-		DBconn = sqlite3.connect(DB_FULL_PATH)
+		DBconn = sqlite3.connect(DB_PATH_FULL)
 		DBcursor = DBconn.cursor()
 	elif (DBcursor==None):
 		DBcursor = DBconn.cursor()
@@ -61,7 +61,7 @@ def DBsetup(DBconn=None, DBcursor=None):
 # DBclose(DBconn=None, DBcursor=None)
 def DBclose(DBconn=None):
 	if (DBconn==None):
-		DBconn = sqlite3.connect(DB_FULL_PATH)
+		DBconn = sqlite3.connect(DB_PATH_FULL)
 	DBconn.close()
 	
 	

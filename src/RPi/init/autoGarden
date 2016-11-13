@@ -1,0 +1,37 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          blabla
+# Required-Start:    $syslog
+# Required-Stop:     $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: blabla
+# Description:
+#
+### END INIT INFO
+
+# http://raspberrypi.stackexchange.com/questions/8734/execute-script-on-start-up
+# https://dajul.com/2011/01/06/solucion-al-error-insserv-warning-script-x-missing-lsb-tags-and-overrides/
+
+
+# FUNCTIONS
+do_start () {
+	/home/pi/Documents/autoGarden/src/RPi/main.py
+}
+
+
+# INPUT MANAGEMENT
+case "$1" in
+  start|"")
+	do_start
+	;;
+  restart|reload|force-reload)
+	# nothing...
+	;;
+  stop)
+	# nothing...
+	;;
+  status)
+	# nothing...
+	;;
+esac

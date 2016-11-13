@@ -112,7 +112,7 @@ def stringToIntArray(s,size=PAYLOAD_ACK_MAX_SIZE):
 def rx(rxLoop=True):
 
 	# parameters DBconn, DBcursor, radio
-	DBconn = sqlite3.connect(DB_FULL_PATH)
+	DBconn = sqlite3.connect(DB_PATH_FULL)
 	DBcursor = DBconn.cursor()
 	radio = NRF24(GPIO, spidev.SpiDev())
 	

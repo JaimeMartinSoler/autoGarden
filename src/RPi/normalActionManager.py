@@ -36,7 +36,7 @@ def txNormalActionManager():
 	time.sleep(1.000)
 	
 	# parameters: DBconn, DBcursor
-	DBconn = sqlite3.connect(DB_FULL_PATH)
+	DBconn = sqlite3.connect(DB_PATH_FULL)
 	DBcursor = DBconn.cursor()
 	# parameters: timers
 	TEMP_AIR_period = 5.0							# TEMP_AIR_period in minutes

@@ -2,6 +2,7 @@
 
 # ----------------------------------------------------------------------
 # IMPORTS
+from glob import *
 import os
 import time
 
@@ -21,12 +22,12 @@ LOG_CRS = 5   # crash
 LOG_OFF = 6   # off
 
 # LOG_LEVEL
-LOG_LVL = LOG_DET	# the current log level
+LOG_LVL = LOG_INF	# the current log level
 
 # LOG_PATHS
-LOG_PATH = 'log'
-LOG_FILE = 'log_'+time.strftime('%Y%m%d')+'.txt'
-LOG_FULL_PATH = LOG_PATH+'/'+LOG_FILE
+LOG_FILE_NAME = 'log_'+time.strftime('%Y%m%d')+'.txt'
+LOG_PATH_REL = 'log'
+LOG_PATH_FULL = PROCESS.mainPath + '/' + LOG_PATH_REL + '/' + LOG_FILE_NAME
 LOG_TIME_FORMAT = '[%Y-%m-%d %H:%M:%S]: '
 
 
@@ -48,9 +49,9 @@ def LOG(logLevel, logText, logPrint=True, logFile=True, logPrintDate=True, logFi
 			else:
 				print(preLn+logText)
 		if (logFile):
-			if not os.path.exists(LOG_PATH):
-				os.makedirs(LOG_PATH)
-			f = open(LOG_FULL_PATH, 'a')
+			if not os.path.exists(PROCESS.mainPath + '/' + LOG_PATH_REL):
+				os.makedirs(PROCESS.mainPath + '/' + LOG_PATH_REL)
+			f = open(LOG_PATH_FULL, 'a')
 			if (logFileDate):
 				f.write(preLn+time.strftime(LOG_TIME_FORMAT)+logText+'\n')
 			else:

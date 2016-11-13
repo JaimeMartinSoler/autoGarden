@@ -14,12 +14,12 @@
 
 # --------------------------------------------------------------
 # IMPORTS
+from glob import *
 import time
 import signal
 from log import LOG, LOG_DEB, LOG_DET, LOG_INF, LOG_WAR, LOG_ERR, LOG_CRS, LOG_OFF
 import threading
 import signal
-from glob import *
 from rxtx import *
 from normalActionManager import *
 from twitterActionManager import *
