@@ -22,7 +22,7 @@ import time
 
 # ----------------------------------------------------------------------
 # PARAMETERS
-ACTIONS_GLOBAL = 3
+ACTIONS_TX_GLOBAL = 3
 
 
 
@@ -36,7 +36,7 @@ ACTIONS_GLOBAL = 3
 # 		raise ProcessLookupError: if (not PROCESS.isAlive)
 # 		raise TimeoutError: if (wait>timeOut)
 # 		raise ValueError: if (after wait, rxAction.getId() is not the expected)
-def setTXwaitRX(txAction, rxAction, txActionText, timeOut=5000, autoIncrement=True):
+def setTXwaitRX(txAction, rxAction, txActionText, timeOut=5000, autoIncrement=True, checkRXid=True):
 
 	# set current millis
 	millis = int(round(time.time()*1000))
@@ -45,7 +45,7 @@ def setTXwaitRX(txAction, rxAction, txActionText, timeOut=5000, autoIncrement=Tr
 	rxAction.set()				# .rxReadyToExec=False, .rxExec=0
 	txAction.set(txActionText)	# .txReadyToTx=False, .txSuccess=0
 	if (autoIncrement):
-		txAction.setId(idAdd(txAction.getId(),ACTIONS_GLOBAL*2))	# TODO: action.setId(String), ACTIONS_GLOBAL
+		txAction.setId(idAdd(txAction.getId(),ACTIONS_TX_GLOBAL*2))	# TODO: action.setId(String), ACTIONS_TX_GLOBAL
 	txAction.txReadyToTx = True
 	
 	# wait for txAction and rxAction to be ready (rxtx.py has to deal with txAction, rxAction in another thread)
@@ -57,8 +57,8 @@ def setTXwaitRX(txAction, rxAction, txActionText, timeOut=5000, autoIncrement=Tr
 		time.sleep(0.100)
 
 	# check the rxAction.getId() is the expected
-	if (idAdd(txAction.getId(),ACTIONS_GLOBAL) != rxAction.getId()):
-		raise ValueError("expected rxAction.ID: \""+idAdd(txAction.getId(),ACTIONS_GLOBAL)+"\"\nrecieved rxAction.ID: \""+rxAction.getId()+"\"")
+	if (checkRXid and (idAdd(txAction.getId(),ACTIONS_TX_GLOBAL) != rxAction.getId())):
+		raise ValueError("expected rxAction.ID: \""+idAdd(txAction.getId(),ACTIONS_TX_GLOBAL)+"\"\nrecieved rxAction.ID: \""+rxAction.getId()+"\"")
 	
 	
 
