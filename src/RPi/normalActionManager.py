@@ -18,6 +18,7 @@ from log import LOG, LOG_DEB, LOG_DET, LOG_INF, LOG_WAR, LOG_ERR, LOG_CRS, LOG_O
 from action import *
 from glob import *
 from DBmanager import *
+from actionManager import *
 
 
 
@@ -36,7 +37,7 @@ def txNormalActionManager():
 	time.sleep(1.000)
 	
 	# parameters: DBconn, DBcursor
-	DBconn = sqlite3.connect(DB_PATH_FULL)
+	DBconn = sqlite3.connect(DB_FILE_NAME_FULL)
 	DBcursor = DBconn.cursor()
 	# parameters: timers
 	TEMP_AIR_period = 5.0							# TEMP_AIR_period in minutes
@@ -50,26 +51,36 @@ def txNormalActionManager():
 		TEMP_AIR_last_j = datetimeToJulian(DBrow[1])
 	# setup: id counters
 	countId = 0
-	# setup: create a fake (txSuccess=1) to avoid tx and jump wait loop
-	txNormalAction.txSuccess = 1
-	txNormalAction.txReadyToTx = True
+	# setup: create initial tx and rx
+	txNormalAction.set()
+	rxNormalAction.set()
+	txNormalAction.setId(intToId(ACTION_NORMAL_ID - ACTION_TYPES_GLOBAL*2))	# ready for autoincrement
 	
 	# loop: check timers and DB, updating txNormalAction if so
 	while (PROCESS.isAlive):
-		# wait for previous action to be transmitted
-		while(txNormalAction.txReadyToTx and txNormalAction.txSuccess<=0):
-			# Check PROCESS.isAlive
-			if (not PROCESS.isAlive):
-				return
-			time.sleep(0.100)
+	
+		# delay
+		time.sleep(1.0)
+		
+		# update nowJulianDT
 		nowJulianDT = nowJulian()
+		
 		# TEMP_AIR management
 		if ((nowJulianDT - TEMP_AIR_last_j) >= TEMP_AIR_period_j):
 			TEMP_AIR_last_j = nowJulianDT
-			txNormalAction.set(intToId(countId)+",R0,A0,NR,GET,TEMP,AIR")
-			txNormalAction.txReadyToTx = True
-			countId += 1
-		time.sleep(1.0)
+			
+			# set tx action and wait rx action
+			try:
+				setTXwaitRX(txNormalAction, rxNormalAction, "XXX,R0,A0,NR,GET,TEMP,AIR", timeOut=5000, autoIncrement=True, checkRXid=True)
+			except RuntimeError:	# if (not PROCESS.isAlive)
+				return
+			except OSError as te:	# if (Timeout)
+				LOG(LOG_ERR,"<<< WARNING: TwitterAction TimeoutError: \"{}\" >>>".format(te), logPreLn=True)
+				continue
+			except ValueError as ve:	# if (rx.ID is not as expected)
+				LOG(LOG_ERR,"<<< WARNING: rxTwitterAction ValueError: \"{}\" >>>".format(ve), logPreLn=True)
+				continue
+				
 		
 
 	

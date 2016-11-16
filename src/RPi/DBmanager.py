@@ -22,9 +22,12 @@ from glob import *
 # ----------------------------------------------------------------------
 # PARAMETERS
 
-DB_FILE_NAME = 'autoGarden.db'
+# DB_PATH
 DB_PATH_REL = 'db'
-DB_PATH_FULL = PROCESS.mainPath + '/' + DB_PATH_REL + '/' + DB_FILE_NAME
+DB_PATH_FULL = PROCESS.mainPath + '/' + DB_PATH_REL
+# DB_FILE_NAME
+DB_FILE_NAME = 'autoGarden.db'
+DB_FILE_NAME_FULL = DB_PATH_FULL + '/' + DB_FILE_NAME
 
 
 
@@ -35,10 +38,11 @@ DB_PATH_FULL = PROCESS.mainPath + '/' + DB_PATH_REL + '/' + DB_FILE_NAME
 # -------------------------------------
 # DBsetup(DBconn=None, DBcursor=None)
 def DBsetup(DBconn=None, DBcursor=None):
-	if (not os.path.exists(PROCESS.mainPath + '/' + DB_PATH_REL)):
-		os.makedirs(PROCESS.mainPath + '/' + DB_PATH_REL)
+	# check if DB_PATH_FULL exists, create it if it does not
+	if (not os.path.exists(DB_PATH_FULL)):
+		os.makedirs(DB_PATH_FULL)
 	if (DBconn==None):
-		DBconn = sqlite3.connect(DB_PATH_FULL)
+		DBconn = sqlite3.connect(DB_FILE_NAME_FULL)
 		DBcursor = DBconn.cursor()
 	elif (DBcursor==None):
 		DBcursor = DBconn.cursor()
@@ -61,7 +65,7 @@ def DBsetup(DBconn=None, DBcursor=None):
 # DBclose(DBconn=None, DBcursor=None)
 def DBclose(DBconn=None):
 	if (DBconn==None):
-		DBconn = sqlite3.connect(DB_PATH_FULL)
+		DBconn = sqlite3.connect(DB_FILE_NAME_FULL)
 	DBconn.close()
 	
 	

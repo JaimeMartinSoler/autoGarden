@@ -22,6 +22,7 @@ from log import LOG, LOG_DEB, LOG_DET, LOG_INF, LOG_WAR, LOG_ERR, LOG_CRS, LOG_O
 from action import *
 from glob import *
 from DBmanager import *
+from actionManager import *
 
 
 
@@ -112,7 +113,7 @@ def stringToIntArray(s,size=PAYLOAD_ACK_MAX_SIZE):
 def rx(rxLoop=True):
 
 	# parameters DBconn, DBcursor, radio
-	DBconn = sqlite3.connect(DB_PATH_FULL)
+	DBconn = sqlite3.connect(DB_FILE_NAME_FULL)
 	DBcursor = DBconn.cursor()
 	radio = NRF24(GPIO, spidev.SpiDev())
 	
@@ -133,13 +134,13 @@ def rx(rxLoop=True):
 			# Check PROCESS.isAlive
 			if (not PROCESS.isAlive):
 				return False
-			# Check Normal Action to be transmitted, managed from manageNormalAction thread (TODO)
+			# Check Normal Action to be transmitted, managed from manageNormalAction thread
 			if (txNormalAction.txReadyToTx and txNormalAction.txSuccess<=0):
 				tx(radio,txNormalAction)	# startListeningAuto=True by default
-			# Check Normal Action to be transmitted, managed from twitterManagerLoop thread (TODO)
+			# Check Twitter Action to be transmitted, managed from twitterManagerLoop thread
 			elif (txTwitterAction.txReadyToTx and txTwitterAction.txSuccess<=0):
 				tx(radio,txTwitterAction)	# startListeningAuto=True by default
-			# sleep
+			# delay
 			time.sleep(0.010)
 
 		# ACK_TX payload before RX

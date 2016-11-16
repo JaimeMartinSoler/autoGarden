@@ -164,6 +164,11 @@ bool RXTX::exec(RF24 &radio, Action &action, bool &execActionChanged)
     return false;
   }
 
+  // ID
+  char id[ID_MAX_SIZE];
+  action.getId(id);
+  LOG(LOG_DET, F("    ID: \""), String(id), F("\""));
+  
   // RX: BOARD_ID
   char txBoardId[BOARD_ID_MAX_SIZE];
   char rxBoardId[BOARD_ID_MAX_SIZE];
@@ -204,7 +209,7 @@ bool RXTX::exec(RF24 &radio, Action &action, bool &execActionChanged)
               Action::compareCharArray(wparId, WPARID_TEMP_LM35_S, sizeof(wparId), sizeof(WPARID_TEMP_LM35_S))) {
             float tempC = Sensors::getTempLM35();
             LOG(LOG_DET, F("  Action to execute: \""), String(action.text), F("\" successfully executed"));
-            action.set("XYZ,"+String(BOARD_ID)+","+String(BOARD_R0_ID)+","+String(type)+",SET,TEMP,AIR,"+String(tempC));
+            action.set(Action::idAdd(String(id),ACTION_TYPES_GLOBAL)+","+String(BOARD_ID)+","+String(BOARD_R0_ID)+","+String(type)+F(",SET,TEMP,AIR,")+String(tempC));
             execActionChanged = true;
             return true;
           }
@@ -234,13 +239,16 @@ bool RXTX::exec(RF24 &radio, Action &action, bool &execActionChanged)
 // return: true(action generated), false(no action generated)
 bool RXTX::generateAction(Action &action)
 {
+  // initial id parameter
+  static long int txID = ACTION_ARDUINO_ID + ACTION_TYPES_GLOBAL;
   // Check Temperature
   if ((signed long)millis() - ga_temp_max_action_last >= GA_TEMP_MAX_ACTION_INTERVAL) {
     // get temperature in celsius
     float tempC = Sensors::getTempLM35();
     if (tempC >= GA_TEMP_MAX) {
       ga_temp_max_action_last = (signed long)millis();
-      action.set("000,"+String(BOARD_ID)+","+String(BOARD_R0_ID)+",AR,SET,TEMP,AIR,"+String(tempC));
+      action.set(String(Action::intToId(txID))+","+String(BOARD_ID)+","+String(BOARD_R0_ID)+F(",AR,SET,TEMP,AIR,")+String(tempC));
+      txID += (ACTION_TYPES_GLOBAL*2);
       LOG(LOG_INF, F("  Generate Action: tempC >= GA_TEMP_MAX"));
       return true;
     }

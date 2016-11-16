@@ -102,15 +102,9 @@ VALUE_POS = 7                     # position in payload char array
 # It deals with overflow and negative addition.
 # return: strId + addition (taking care of type conversions, etc)
 def idAdd(strId, addition):
-	intId = idToInt(strId)
-	if (intId < 0):
-		return 'X'
-	intId += addition
-	if (intId < 0):
-		intId += (ID_MAX+1)
-	elif (intId > ID_MAX):
-		intId -= (ID_MAX+1)
-	return intToId(intId)
+	if (len(strId) != ID_MAX_SIZE):
+		raise ValueError("len(strId)="+len(strId)+" != ID_MAX_SIZE="+ID_MAX_SIZE)
+	return intToId(idToInt(strId) + addition)
 
 
 # -----------------------
@@ -121,7 +115,7 @@ def idToInt(strId):
 	v = 0
 	intId = 0
 	if (len(strId) != ID_MAX_SIZE):
-		return -1
+		raise ValueError("len(strId)="+len(strId)+" != ID_MAX_SIZE="+ID_MAX_SIZE)
 	for i in range(0,ID_MAX_SIZE):
 		v = ord(strId[i]) - ASCII_PRINT_MIN;
 		if ((v < 0) or (v > ASCII_PRINT_RANGE)):
@@ -135,11 +129,10 @@ def idToInt(strId):
 # return: it gets the String equivalent to the int intId.
 # (i.e.: idToInt(0)->"!!!", idAdd(285888)->"ABC", idAdd(830583)->"~~~")
 def intToId(intId):
+	intId = intId % (ID_MAX+1)
 	strId = ''
 	divisor = 0
 	remain = intId
-	if ((intId < 0) or (intId > ID_MAX)):
-		return 'X'
 	for expon in range(ID_MAX_SIZE-1,-1,-1):
 		divisor = ASCII_PRINT_RANGE**expon
 		strId += chr(ASCII_PRINT_MIN+remain/divisor)
@@ -316,6 +309,12 @@ class Action:
 		else:
 			return textFields[pos]
 		
+    # ----------------------------------------------------------------------
+    # FUNCTIONS - SETTERS
+	def setId(self, id="!!!"):
+		if (len(id) != ID_MAX_SIZE):
+			raise ValueError("len(id)="+len(id)+" != ID_MAX_SIZE="+ID_MAX_SIZE)
+		self.text = id + self.text[ID_MAX_SIZE:]
 		
 		
 		

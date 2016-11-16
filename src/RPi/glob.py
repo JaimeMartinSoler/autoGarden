@@ -13,6 +13,7 @@
 # this has to be called and initialized before importing other files that use PROCESS
 import inspect
 import os
+# class Process
 class Process:
 	isAlive = True
 	mainPath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -38,14 +39,6 @@ from jdcal import gcal2jd, jd2gcal
 
 # ----------------------------------------------------------------------
 # PARAMETERS
-
-# Actions
-rxAction = Action()			# Action for RX general propose
-rxNormalAction = Action()	# Action for RX Normal actions, answers to requests from RPi DB,timers checking module
-rxTwitterAction = Action()	# Action for RX Twitter actions, answers to requests from RPi Twitter checking module
-rxArduinoAction = Action()	# Action for RX Arduino actions, urgents messages sent by Arduino
-txNormalAction = Action()	# Action for TX Normal actions, requests from RPi DB,timers checking module
-txTwitterAction = Action()	# Action for TX Twitter actions, requests from RPi Twitter checking module
 
 
 

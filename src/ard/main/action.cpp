@@ -226,15 +226,42 @@ bool Action::compareCharArray(char ca0[], char ca1[], int ca0Size, int ca1Size)
 // return: strId + addition (taking care of type conversions, etc)
 String Action::idAdd(String strId, int addition)
 {
-  long int intId = idToInt(strId);
-  if (intId < 0) { return "X";}
-  intId += addition;
-  if (intId < 0) {
-    intId += (ID_MAX+1);
-  } else if (intId > ID_MAX) {
-    intId -= (ID_MAX+1);
+  if (strId.length() != ID_SIZE) {return "X";}
+  return intToId(idToInt(strId)+addition);
+}
+
+// idToInt(String)
+// return: it gets the equivalent int to the String strId.
+// (i.e.: idToInt("!!!")->0, idAdd("ABC")->285888, idAdd("~~~")->830583)
+long int Action::idToInt(String strId)
+{
+  int v = 0;
+  long int intId = 0;
+  if (strId.length() != ID_SIZE) {return -1;}
+  for(int i=0; i<ID_SIZE; i++) {
+    v = (int)strId.charAt(i) - ASCII_PRINT_MIN;
+    if ((v < 0) || (v > ASCII_PRINT_RANGE)) { return -1; }
+    intId += (v * powInt(ASCII_PRINT_RANGE, ID_SIZE-i-1));
   }
-  return intToId(intId);
+  return intId;
+}
+
+
+// intToId(long int)
+// return: it gets the String equivalent to the int intId.
+// (i.e.: idToInt(0)->"!!!", idAdd(285888)->"ABC", idAdd(830583)->"~~~")
+String Action::intToId(long int intId)
+{
+  intId = intId % (ID_MAX+1);
+  String strId = "";
+  long int divisor = 0;
+  long int remain = intId;
+  for (int expon=(ID_SIZE-1); expon>=0; expon--) {
+    divisor = powInt(ASCII_PRINT_RANGE,expon);
+    strId += String((char)(ASCII_PRINT_MIN+remain/divisor));
+    remain = remain%divisor;
+  }
+  return strId;
 }
 
 
@@ -331,41 +358,6 @@ void Action::getCharArrayInPosition(char charArray[], int charArraySize, int pos
   // set the char array
   clearCharArray(charArray, charArraySize);
   copyCharArray(charArray, ans, ansIdx+1); // +1 to copy '\0' termination from ans
-}
-
-
-// idToInt(String)
-// return: it gets the equivalent int to the String strId.
-// (i.e.: idToInt("!!!")->0, idAdd("ABC")->285888, idAdd("~~~")->830583)
-long int Action::idToInt(String strId)
-{
-  int v = 0;
-  long int intId = 0;
-  if (strId.length() != ID_SIZE) {return -1;}
-  for(int i=0; i<ID_SIZE; i++) {
-    v = (int)strId.charAt(i) - ASCII_PRINT_MIN;
-    if ((v < 0) || (v > ASCII_PRINT_RANGE)) { return -1; }
-    intId += (v * powInt(ASCII_PRINT_RANGE, ID_SIZE-i-1));
-  }
-  return intId;
-}
-
-
-// intToId(long int)
-// return: it gets the String equivalent to the int intId.
-// (i.e.: idToInt(0)->"!!!", idAdd(285888)->"ABC", idAdd(830583)->"~~~")
-String Action::intToId(long int intId)
-{
-  String strId = "";
-  long int divisor = 0;
-  long int remain = intId;
-  if ((intId < 0) || (intId > ID_MAX)) { return "X"; }
-  for (int expon=(ID_SIZE-1); expon>=0; expon--) {
-    divisor = powInt(ASCII_PRINT_RANGE,expon);
-    strId += String((char)(ASCII_PRINT_MIN+remain/divisor));
-    remain = remain%divisor;
-  }
-  return strId;
 }
 
 

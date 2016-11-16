@@ -40,13 +40,17 @@ const short int ASCII_PRINT_MIN = 33;   // '!' first printable ASCII character
 const short int ASCII_PRINT_MAX = 126;  // '~' last  printable ASCII character
 const long int ASCII_PRINT_RANGE = ((long int)ASCII_PRINT_MAX - (long int)ASCII_PRINT_MIN + 1);
 
+// Action Tags (see RPi.actionManager.py)
+#define ACTION_TYPES_GLOBAL 3
+#define ACTION_ARDUINO_ID 2
+
 // ID
 #define ID_MAX_SIZE 4 // including null char '\0'
 #define ID_POS 0      // position in payload char array
                       // this must be 0, if we change it we would have to change more code,
                       // the reason is that ID admits ',' as value but also is the separator,
                       // so ID is treated specially in some parts of the code in this class
-const short int ID_SIZE = 3;
+const short int ID_SIZE = ID_MAX_SIZE - 1;  // NOT including null char '\0'
 const long int ID_MAX = (((long int)ASCII_PRINT_RANGE) * ((long int)ASCII_PRINT_RANGE) * ((long int)ASCII_PRINT_RANGE) - 1);
 
 // board ID
@@ -145,14 +149,14 @@ class Action
     public:
       static bool compareCharArray(char ca0[], char ca1[], int ca0Size, int ca1Size);
       void clearAction();
-      static String idAdd(String strId, int addition);  // static version
+      static String idAdd(String strId, int addition);
+      static long int idToInt(String strId);
+      static String intToId(long int intId);
     // ----------------------------------------------------------------------
     // FUNCTIONS - PRIVATE
     private:
       bool validate();
       void getCharArrayInPosition(char charArray[], int charArraySize, int pos, char separator = ACTION_SEPARATOR);
-      static long int idToInt(String strId);
-      static String intToId(long int intId);
 };
 
 #endif
