@@ -19,6 +19,7 @@ from action import *
 from glob import *
 from DBmanager import *
 from actionManager import *
+from timer import *
 
 
 
@@ -39,18 +40,10 @@ def txNormalActionManager():
 	# parameters: DBconn, DBcursor
 	DBconn = sqlite3.connect(DB_FILE_NAME_FULL)
 	DBcursor = DBconn.cursor()
-	# parameters: timers
-	TEMP_AIR_period = 5.0							# TEMP_AIR_period in minutes
-	TEMP_AIR_period_j = TEMP_AIR_period/(1440.0)	# TEMP_AIR_period in julian
-	TEMP_AIR_last_j = 0.0
 	
-	# setup: time parameters
-	DBcursor.execute('SELECT * FROM WEATHER WHERE WPAR=\'TEMP\' AND WPARID=\'AIR\' ORDER BY DATETIME DESC LIMIT 1;')
-	DBrow = DBcursor.fetchone()
-	if (DBrow is not None):
-		TEMP_AIR_last_j = datetimeToJulian(DBrow[1])
-	# setup: id counters
-	countId = 0
+	# parameters: timers
+	timer_TEMP_AIR = Timer(periodMins=5.0, queryLastMins='SELECT * FROM WEATHER WHERE WPAR=\'TEMP\' AND WPARID=\'AIR\' ORDER BY DATETIME DESC LIMIT 1;', DBcurs=DBcursor, DBfield=1, toJulian=True)
+		
 	# setup: create initial tx and rx
 	txNormalAction.set()
 	rxNormalAction.set()
@@ -62,13 +55,9 @@ def txNormalActionManager():
 		# delay
 		time.sleep(1.0)
 		
-		# update nowJulianDT
-		nowJulianDT = nowJulian()
-		
 		# TEMP_AIR management
-		if ((nowJulianDT - TEMP_AIR_last_j) >= TEMP_AIR_period_j):
-			TEMP_AIR_last_j = nowJulianDT
-			
+		if (timer_TEMP_AIR.isReady()):
+		
 			# set tx action and wait rx action
 			try:
 				setTXwaitRX(txNormalAction, rxNormalAction, "XXX,R0,A0,NR,GET,TEMP,AIR", timeOut=5000, autoIncrement=True, checkRXid=True)

@@ -25,6 +25,7 @@ from DBmanager import *
 from actionManager import *
 from twython import Twython, TwythonError
 from twitterPass import APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET
+from timer import *
 
 
 
@@ -44,18 +45,15 @@ def txTwitterActionManager():
 	# parameters: DBconn, DBcursor
 	DBconn = sqlite3.connect(DB_FILE_NAME_FULL)
 	DBcursor = DBconn.cursor()
-	# parameters: id counters
-	countId = 200000
+	
 	# parameters: timers
-	TEMP_AIR_period = 60.0							# TEMP_AIR_period in minutes
-	TEMP_AIR_period_j = TEMP_AIR_period/(1440.0)	# TEMP_AIR_period in julian
-	TEMP_AIR_last_j = 0.0
-	TWITTER_period = 1.1						# TWITTER_period in minutes
-	TWITTER_period_j = TWITTER_period/(1440.0)	# TWITTER_period_j in julian
-	TWITTER_last_j = 0.0
+	timer_tweet_TEMP_AIR = Timer(periodMins=60.0)
+	timer_mentions = Timer(periodMins=1.1)
+	
 	# parameters: twitter
 	twitter = Twython(APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET)
 	twitter_mention = []
+	
 	# parameters: MENTIONS
 	twitter_mention_text_last = ""
 	# parameters: TEMP_AIR_TWEETS
@@ -96,13 +94,9 @@ def txTwitterActionManager():
 		
 		# delay
 		time.sleep(1.0)
-		
-		# update nowJulianDT
-		nowJulianDT = nowJulian()
-		
+
 		# MENTIONS MANAGEMENT
-		if ((nowJulianDT - TWITTER_last_j) >= TWITTER_period_j):
-			TWITTER_last_j = nowJulianDT
+		if (timer_mentions.isReady()):
 			
 			# get last mention
 			try:
@@ -149,7 +143,7 @@ def txTwitterActionManager():
 		# AUTO TWEETS MANAGEMENT
 		
 		# TEMP_AIR management
-		if ((nowJulianDT - TEMP_AIR_last_j) >= TEMP_AIR_period_j):
+		if (timer_tweet_TEMP_AIR.isReady()):
 		
 			# get last TEMP_AIR temperature from DB
 			DBcursor.execute('SELECT * FROM WEATHER WHERE WPAR=\'TEMP\' AND WPARID=\'AIR\' ORDER BY DATETIME DESC LIMIT 1;')
@@ -157,7 +151,6 @@ def txTwitterActionManager():
 			
 			# make a tweet about the TEMP_AIR
 			if (DBrow is not None):
-				TEMP_AIR_last_j = nowJulianDT
 				TEMP_AIR_value = DBrow[6]
 				tweetText = random.choice(TEMP_AIR_TWEETS).format(TEMP_AIR_value)
 				try:
