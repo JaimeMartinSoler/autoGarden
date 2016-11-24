@@ -98,19 +98,27 @@ class Timer:
 		# minutes timer
 		elif (self.isMinutesTimer()):
 			self.lastMillis = -1
+			# nowJulian()
 			if (startReady):
 				self.lastJulian = nowJulian() - self.periodJulian
 			else:
 				self.lastJulian = nowJulian()
+			# query to DB
 			if ((len(queryLastMins) > 1) and (DBcurs != None) and (DBfield>=0)):
 				DBcurs.execute(queryLastMins)
 				DBrow = DBcurs.fetchone()
-				if ((len(DBrow)-1) >= DBfield):
-					if (toJulian):
-						self.lastJulian = datetimeToJulian(DBrow[DBfield])
+				if (DBrow is not None):
+					if ((len(DBrow)-1) >= DBfield):
+						if (toJulian):
+							self.lastJulian = datetimeToJulian(DBrow[DBfield])
+						else:
+							self.lastJulian = DBrow[DBfield]
+				else:
+					if (startReady):
+						self.lastJulian = nowJulian() - self.periodJulian
 					else:
-						self.lastJulian = DBrow[DBfield]
-		
+						self.lastJulian = nowJulian()
+				
 		
 		
 		

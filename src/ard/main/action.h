@@ -54,11 +54,11 @@ const short int ID_SIZE = ID_MAX_SIZE - 1;  // NOT including null char '\0'
 const long int ID_MAX = (((long int)ASCII_PRINT_RANGE) * ((long int)ASCII_PRINT_RANGE) * ((long int)ASCII_PRINT_RANGE) - 1);
 
 // board ID
-#define BOARD_ID_MAX_SIZE 3 // including null char '\0'
+#define BOARD_ID_MAX_SIZE 2 // including null char '\0'
 #define BOARD_ID_TX_POS 1   // position in payload char array
 #define BOARD_ID_RX_POS 2   // position in payload char array
-#define BOARD_ID "A0"
-#define BOARD_R0_ID "R0"
+#define BOARD_ID "A"
+#define BOARD_R0_ID "R"
 
 // Type
 #define TYPE_MAX_SIZE 3 // including null char '\0'
@@ -88,17 +88,29 @@ const long int ID_MAX = (((long int)ASCII_PRINT_RANGE) * ((long int)ASCII_PRINT_
 // Weather Parameters: Long (length<=4)
 #define WPAR_TEMP_L "TEMP"
 #define WPAR_HUMI_L "HUMI"
+#define WPAR_LGHT_L "LGHT"
+#define WPAR_RAIN_L "RAIN"
 // Weather Parameters: Short (length=1)
 #define WPAR_TEMP_S "T"
 #define WPAR_HUMI_S "H"
+#define WPAR_LGHT_S "L"
+#define WPAR_RAIN_S "R"
 
 // Sensor Id Parameters
 #define WPARID_MAX_SIZE 5   // including null char '\0'
 #define WPARID_POS 6        // position in payload char array
 // Sensor Id Parameters: Long (length<=4)
-#define WPARID_TEMP_LM35_L "AIR"
+#define WPARID_TEMP_LM35_L "LM35"
+#define WPARID_TEMP_DHT_L "DHT"
+#define WPARID_HUMI_DHT_L "DHT"
+#define WPARID_LGHT_BH_L "BH"
+#define WPARID_RAIN_MH_L "MH"
 // Weather Parameters: Short (length=1)
-#define WPARID_TEMP_LM35_S "A"
+#define WPARID_TEMP_LM35_S "L"
+#define WPARID_TEMP_DHT_S "D"
+#define WPARID_HUMI_DHT_S "D"
+#define WPARID_LGHT_BH_S "B"
+#define WPARID_RAIN_MH_S "M"
 
 // Value Parameters
 #define VALUE_MAX_SIZE ACTION_MAX_SIZE  // including null char '\0'

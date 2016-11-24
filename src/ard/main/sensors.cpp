@@ -13,6 +13,7 @@
 // ----------------------------------------------------------------------
 // INCLUDES
 #include <RF24.h>
+#include "DHT.h"
 #include "sensors.h"
 
 
@@ -27,7 +28,6 @@ const short int Sensors::NRF24_PIPE_W = 1;
 const uint64_t Sensors::NRF24_PIPES[2] = {0xE8E8F0F0E1LL, 0xF0F0F0F0E1LL};
 const short int Sensors::NRF24_PAYLOAD_MAX_SIZE = 32;      // defined by NRF24 datasheet
 const short int Sensors::NRF24_PAYLOAD_ACK_MAX_SIZE = 32;  // defined by NRF24 datasheet
-
 // NRF24L01: pins CE, CSN
 const short int Sensors::NRF24_PIN_CE = 9;
 const short int Sensors::NRF24_PIN_CSN = 10;
@@ -35,6 +35,11 @@ const short int Sensors::NRF24_PIN_CSN = 10;
 // LM35: pins
 const short int Sensors::LM35_PIN_ANALOG_IN = 5;
 
+// DHT22: pins and object
+const short int Sensors::DHT_PIN = 2;
+const short int Sensors::DHT_TYPE = 22;
+// DHT22: object
+DHT sensorDHT(Sensors::DHT_PIN, Sensors::DHT_TYPE);
 
 
 
@@ -47,6 +52,7 @@ void Sensors::setupAll(RF24 &_radio)
 {
   Sensors::setupNRF24(_radio);
   Sensors::setupLM35();
+  Sensors::setupDHT();
 }
 
 
@@ -88,6 +94,15 @@ void Sensors::setupLM35()
 }
 
 
+// setupDHT()
+// setupDHT digital temperature sensor
+void Sensors::setupDHT()
+{
+  sensorDHT = DHT(DHT_PIN, DHT_TYPE);
+  sensorDHT.begin();
+}
+
+
 
 
 // ----------------------------------------------------------------------
@@ -95,11 +110,29 @@ void Sensors::setupLM35()
 
 // getTempLM35()
 // get temperature from LM35 analog temperature sensor
-// return: float(temperature in celsius)
+// return: float(temperature in celsius [tempF=(tempC*1.8)+32])
 float Sensors::getTempLM35() 
 {
   // get temperature in celsius [tempF = (tempC * 1.8) + 32]
   return analogRead(LM35_PIN_ANALOG_IN) / 9.31;
+}
+
+
+// getTempDHT()
+// get temperature from DHT digital temperature and humidity sensor
+// return: float (temperature in celsius [tempF=(tempC*1.8)+32])
+float Sensors::getTempDHT() 
+{
+  return sensorDHT.readTemperature();
+}
+
+
+// getHumiDHT()
+// get humidity from DHT digital temperature and humidity sensor
+// return: float (humidity as percentage)
+float Sensors::getHumiDHT() 
+{
+  return sensorDHT.readHumidity();
 }
 
 

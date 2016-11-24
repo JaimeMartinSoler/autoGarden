@@ -164,61 +164,117 @@ bool RXTX::exec(RF24 &radio, Action &action, bool &execActionChanged)
     return false;
   }
 
-  // ID
+  // get all parameters: char arrays declarations
   char id[ID_MAX_SIZE];
-  action.getId(id);
-  LOG(LOG_DET, F("    ID: \""), String(id), F("\""));
-  
-  // RX: BOARD_ID
   char txBoardId[BOARD_ID_MAX_SIZE];
   char rxBoardId[BOARD_ID_MAX_SIZE];
+  char type[TYPE_MAX_SIZE];
+  char func[FUNC_MAX_SIZE];
+  int paramNum;
+  char wpar[WPAR_MAX_SIZE];
+  char wparId[WPARID_MAX_SIZE];
+  
+  // get all parameters: char arrays initialization
+  action.getId(id);
   action.getTxBoardId(txBoardId);
   action.getRxBoardId(rxBoardId);
+  action.getType(type);
+  action.getFunc(func);
+  paramNum = action.getParamNum();
+  action.getWpar(wpar);
+  action.getWparId(wparId);
+  
+  // get all parameters: logs
+  LOG(LOG_DET, F("    ID: \""), String(id), F("\""));
   LOG(LOG_DET, F("    txBoardId: \""), String(txBoardId), F("\""));
   LOG(LOG_DET, F("    rxBoardId: \""), String(rxBoardId), F("\""));
+  LOG(LOG_DET, F("    type: \""), String(type), F("\""));
+  LOG(LOG_DET, F("    function: \""), String(func), F("\""));
+  LOG(LOG_DET, F("    paramNum: "), String(paramNum));
+  LOG(LOG_DET, F("    weather param: \""), String(wpar), F("\""));
+  LOG(LOG_DET, F("    weather param id: \""), String(wparId), F("\""));
+
+  // BOARD_ID = RX
   if (Action::compareCharArray(rxBoardId, BOARD_ID, sizeof(rxBoardId), sizeof(BOARD_ID))) {
     
-    // TYPE
-    char type[TYPE_MAX_SIZE];
-    action.getType(type);
-    
-    // FUNC
-    char func[FUNC_MAX_SIZE];
-    action.getFunc(func);
-    LOG(LOG_DET, F("    function: \""), String(func), F("\""));
+    // FUNC = GET
     if (Action::compareCharArray(func,FUNC_GET_L, sizeof(func), sizeof(FUNC_GET_L)) ||
         Action::compareCharArray(func,FUNC_GET_S, sizeof(func), sizeof(FUNC_GET_S))) {
       
-      // paramNum
-      int paramNum = action.getParamNum();
-      LOG(LOG_DET, F("    paramNum: "), String(paramNum));
+      // paramNum = 2
       if (paramNum==2) {
         
-        // WPAR
-        char wpar[WPAR_MAX_SIZE];
-        action.getWpar(wpar);
-        LOG(LOG_DET, F("    weather param: \""), String(wpar), F("\""));
+        // WPAR = TEMP
         if (Action::compareCharArray(wpar, WPAR_TEMP_L, sizeof(wpar), sizeof(WPAR_TEMP_L)) ||
             Action::compareCharArray(wpar, WPAR_TEMP_S, sizeof(wpar), sizeof(WPAR_TEMP_S))) {
           
-          // WPARID
-          char wparId[WPARID_MAX_SIZE];
-          action.getWparId(wparId);
-          LOG(LOG_DET, F("    weather param id: \""), String(wparId), F("\""));
+          // WPARID = LM35
           if (Action::compareCharArray(wparId, WPARID_TEMP_LM35_L, sizeof(wparId), sizeof(WPARID_TEMP_LM35_L)) ||
               Action::compareCharArray(wparId, WPARID_TEMP_LM35_S, sizeof(wparId), sizeof(WPARID_TEMP_LM35_S))) {
-            float tempC = Sensors::getTempLM35();
+            float tempLM35 = Sensors::getTempLM35();
             LOG(LOG_DET, F("  Action to execute: \""), String(action.text), F("\" successfully executed"));
-            action.set(Action::idAdd(String(id),ACTION_TYPES_GLOBAL)+","+String(BOARD_ID)+","+String(BOARD_R0_ID)+","+String(type)+F(",SET,TEMP,AIR,")+String(tempC));
+            action.set(
+              Action::idAdd(String(id),ACTION_TYPES_GLOBAL) + F(",") +
+              String(BOARD_ID) + F(",") +
+              String(BOARD_R0_ID) + F(",") +
+              String(type) + F(",") +
+              String(FUNC_SET_S) + F(",") +
+              String(WPAR_TEMP_L) + F(",") +
+              String(WPARID_TEMP_LM35_L) + F(",") +
+              String(tempLM35)
+            );
             execActionChanged = true;
             return true;
           }
-        }
+          
+          // WPARID = DHT (for WPAR = TEMP)
+          else if (Action::compareCharArray(wparId, WPARID_TEMP_DHT_L, sizeof(wparId), sizeof(WPARID_TEMP_DHT_L)) ||
+                   Action::compareCharArray(wparId, WPARID_TEMP_DHT_S, sizeof(wparId), sizeof(WPARID_TEMP_DHT_S))) {
+            float tempDHT = Sensors::getTempDHT();
+            LOG(LOG_DET, F("  Action to execute: \""), String(action.text), F("\" successfully executed"));
+            action.set(
+              Action::idAdd(String(id),ACTION_TYPES_GLOBAL) + F(",") +
+              String(BOARD_ID) + F(",") +
+              String(BOARD_R0_ID) + F(",") +
+              String(type) + F(",") +
+              String(FUNC_SET_S) + F(",") +
+              String(WPAR_TEMP_L) + F(",") +
+              String(WPARID_TEMP_DHT_L) + F(",") +
+              String(tempDHT)
+            );
+            execActionChanged = true;
+            return true;
+          }
+        } 
+        
+        // WPAR = HUMI
+        else if (Action::compareCharArray(wpar, WPAR_HUMI_L, sizeof(wpar), sizeof(WPAR_HUMI_L)) ||
+                 Action::compareCharArray(wpar, WPAR_HUMI_S, sizeof(wpar), sizeof(WPAR_HUMI_S))) {
+
+          // WPARID = DHT (for WPAR = HUMI)
+          if (Action::compareCharArray(wparId, WPARID_HUMI_DHT_L, sizeof(wparId), sizeof(WPARID_HUMI_DHT_L)) ||
+              Action::compareCharArray(wparId, WPARID_HUMI_DHT_S, sizeof(wparId), sizeof(WPARID_HUMI_DHT_S))) {
+            float humiDHT = Sensors::getHumiDHT();
+            LOG(LOG_DET, F("  Action to execute: \""), String(action.text), F("\" successfully executed"));
+            action.set(
+              Action::idAdd(String(id),ACTION_TYPES_GLOBAL) + F(",") +
+              String(BOARD_ID) + F(",") +
+              String(BOARD_R0_ID) + F(",") +
+              String(type) + F(",") +
+              String(FUNC_SET_S) + F(",") +
+              String(WPAR_HUMI_L) + F(",") +
+              String(WPARID_HUMI_DHT_L) + F(",") +
+              String(humiDHT)
+            );
+            execActionChanged = true;
+            return true;
+          }
+        } 
       }
     }
   }
   
-  // TX: BOARD_ID
+  // BOARD_ID = TX
   else if (Action::compareCharArray(txBoardId, BOARD_ID, sizeof(txBoardId), sizeof(BOARD_ID))) {
     tx(radio, action);
     radio.startListening();
@@ -244,10 +300,19 @@ bool RXTX::generateAction(Action &action)
   // Check Temperature
   if ((signed long)millis() - ga_temp_max_action_last >= GA_TEMP_MAX_ACTION_INTERVAL) {
     // get temperature in celsius
-    float tempC = Sensors::getTempLM35();
-    if (tempC >= GA_TEMP_MAX) {
+    float tempDHT = Sensors::getTempDHT();
+    if (tempDHT >= GA_TEMP_MAX) {
       ga_temp_max_action_last = (signed long)millis();
-      action.set(String(Action::intToId(txID))+","+String(BOARD_ID)+","+String(BOARD_R0_ID)+F(",AR,SET,TEMP,AIR,")+String(tempC));
+      action.set(
+        Action::intToId(txID) + F(",") +
+        String(BOARD_ID) + F(",") +
+        String(BOARD_R0_ID) + F(",") +
+        String(TYPE_ARDUINO_S) + F(",") +
+        String(FUNC_SET_S) + F(",") +
+        String(WPAR_TEMP_L) + F(",") +
+        String(WPARID_TEMP_DHT_L) + F(",") +
+        String(tempDHT)
+      );
       txID += (ACTION_TYPES_GLOBAL*2);
       LOG(LOG_INF, F("  Generate Action: tempC >= GA_TEMP_MAX"));
       return true;

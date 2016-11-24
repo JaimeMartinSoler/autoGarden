@@ -40,11 +40,11 @@ ID_POS = 0      # position in payload char array
 ID_MAX = (ASCII_PRINT_RANGE * ASCII_PRINT_RANGE * ASCII_PRINT_RANGE) - 1
 
 # Board ID
-BOARD_ID_MAX_SIZE = 2 # unlike C++, here we do NOT have to include the null char '\0')
+BOARD_ID_MAX_SIZE = 1 # unlike C++, here we do NOT have to include the null char '\0')
 BOARD_ID_TX_POS = 1   # position in payload char array
 BOARD_ID_RX_POS = 2   # position in payload char array
-BOARD_ID ='R0'
-BOARD_A0_ID = 'A0'
+BOARD_ID ='R'
+BOARD_A0_ID = 'A'
 
 # Type
 TYPE_MAX_SIZE = 2 # unlike C++, here we do NOT have to include the null char '\0')
@@ -74,17 +74,29 @@ WPAR_POS = 5        # position in payload char array
 # Weather Parameters: Long (length<=4)
 WPAR_TEMP_L = 'TEMP'
 WPAR_HUMI_L = 'HUMI'
+WPAR_LGHT_L = 'LGHT'
+WPAR_RAIN_L = 'RAIN'
 # Weather Parameters: Short (length=1)
 WPAR_TEMP_S = 'T'
 WPAR_HUMI_S = 'H'
+WPAR_LGHT_S = 'L'
+WPAR_RAIN_S = 'R'
 
 # Sensor Id Parameters
 WPARID_MAX_SIZE = 4   # unlike C++, here we do NOT have to include the null char '\0')
 WPARID_POS = 6        # position in payload char array
 # Sensor Id Parameters: Long (length<=4)
-WPARID_TEMP_LM35_L = 'AIR'
+WPARID_TEMP_LM35_L = 'LM35'
+WPARID_TEMP_DHT_L = 'DHT'
+WPARID_HUMI_DHT_L = 'DHT'
+WPARID_LGHT_BH_L = 'BH'
+WPARID_RAIN_MH_L = 'MH'
 # Weather Parameters: Short (length=1)
-WPARID_TEMP_LM35_S = 'A'
+WPARID_TEMP_LM35_S = 'L'
+WPARID_TEMP_DHT_S = 'D'
+WPARID_TEMP_DHT_S = 'D'
+WPARID_LGHT_BH_S = 'B'
+WPARID_RAIN_MH_S = 'M'
 
 # Value Parameters
 VALUE_MAX_SIZE = ACTION_MAX_SIZE  # unlike C++, here we do NOT have to include the null char '\0')
@@ -219,86 +231,26 @@ class Action:
 		return self.getStringInPos(BOARD_ID_RX_POS)
 	def getType(self):
 		return self.getStringInPos(TYPE_POS)
-	def getType_S(self):
-		type = self.getType()
-		if (len(type)>1):
-			if (type==TYPE_NORMAL_L):
-				return TYPE_NORMAL_S
-			elif (type==TYPE_TWITTER_L):
-				return TYPE_TWITTER_S
-			elif (type==TYPE_ARDUINO_L):
-				return TYPE_ARDUINO_S
-		else:
-			return type
 	def getType_L(self):
-		type = self.getType()
-		if (len(type)<=1):
-			if (type==TYPE_NORMAL_S):
-				return TYPE_NORMAL_L
-			elif (type==TYPE_TWITTER_S):
-				return TYPE_TWITTER_L
-			elif (type==TYPE_ARDUINO_S):
-				return TYPE_ARDUINO_L
-		else:
+		type = self.getStringInPos(TYPE_POS)
+		if (len(type) >= TYPE_MAX_SIZE):
 			return type
+		elif (type==TYPE_NORMAL_S):
+			return TYPE_NORMAL_L
+		elif (type==TYPE_TWITTER_S):
+			return TYPE_TWITTER_L
+		elif (type==TYPE_ARDUINO_S):
+			return TYPE_ARDUINO_L
+		else:
+			return ''
 	def getFunc(self):
 		return self.getStringInPos(FUNC_POS)
-	def getFunc_S(self):
-		func = self.getFunc()
-		if (len(func)>1):
-			if (func==FUNC_GET_L):
-				return FUNC_GET_S
-			elif (func==FUNC_SET_L):
-				return FUNC_SET_S
-		else:
-			return func
-	def getFunc_L(self):
-		func = self.getFunc()
-		if (len(func)<=1):
-			if (func==FUNC_GET_S):
-				return FUNC_GET_L
-			elif (func==FUNC_SET_S):
-				return FUNC_SET_L
-		else:
-			return func
 	def getParamNum(self):
 		return max(0, len(self.textToList())-FIXED_PARAMETERS)
 	def getWpar(self):
 		return self.getStringInPos(WPAR_POS)
-	def getWpar_S(self):
-		wpar = self.getWpar()
-		if (len(wpar)>1):
-			if (wpar==WPAR_TEMP_L):
-				return WPAR_TEMP_S
-			elif (wpar==WPAR_HUMI_L):
-				return WPAR_HUMI_S
-		else:
-			return wpar
-	def getWpar_L(self):
-		wpar = self.getWpar()
-		if (len(wpar)<=1):
-			if (wpar==WPAR_TEMP_S):
-				return WPAR_TEMP_L
-			elif (wpar==WPAR_HUMI_S):
-				return WPAR_HUMI_L
-		else:
-			return wpar
 	def getWparId(self):
 		return self.getStringInPos(WPARID_POS)
-	def getWparId_S(self):
-		wparId = self.getWparId()
-		if (len(wparId)>1):
-			if (wparId==WPARID_TEMP_LM35_L):
-				return WPARID_TEMP_LM35_S
-		else:
-			return wparId
-	def getWparId_L(self):
-		wparId = self.getWparId()
-		if (len(wparId)<=1):
-			if (wparId==WPARID_TEMP_LM35_S):
-				return WPARID_TEMP_LM35_L
-		else:
-			return wparId
 	def getValue(self):
 		return self.getStringInPos(VALUE_POS)
 	# getStringInPos (it checks if we go out of bounds)

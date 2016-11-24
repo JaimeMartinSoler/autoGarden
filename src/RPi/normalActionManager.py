@@ -41,13 +41,24 @@ def txNormalActionManager():
 	DBconn = sqlite3.connect(DB_FILE_NAME_FULL)
 	DBcursor = DBconn.cursor()
 	
+	# parameters: timers queries
+	query_TEMP_LM35 = 'SELECT * FROM WEATHER WHERE WPAR=\'{}\' AND WPARID=\'{}\' ORDER BY DATETIME DESC LIMIT 1;'.format(WPAR_TEMP_L, WPARID_TEMP_LM35_L)
+	query_TEMP_DHT = 'SELECT * FROM WEATHER WHERE WPAR=\'{}\' AND WPARID=\'{}\' ORDER BY DATETIME DESC LIMIT 1;'.format(WPAR_TEMP_L, WPARID_TEMP_DHT_L)
+	query_HUMI_DHT = 'SELECT * FROM WEATHER WHERE WPAR=\'{}\' AND WPARID=\'{}\' ORDER BY DATETIME DESC LIMIT 1;'.format(WPAR_HUMI_L, WPARID_HUMI_DHT_L)
 	# parameters: timers
-	timer_TEMP_AIR = Timer(periodMins=5.0, queryLastMins='SELECT * FROM WEATHER WHERE WPAR=\'TEMP\' AND WPARID=\'AIR\' ORDER BY DATETIME DESC LIMIT 1;', DBcurs=DBcursor, DBfield=1, toJulian=True)
-		
+	timer_TEMP_LM35 = Timer(periodMins=30.0, queryLastMins=query_TEMP_LM35, DBcurs=DBcursor, DBfield=1, toJulian=True)
+	timer_TEMP_DHT = Timer(periodMins=5.0, queryLastMins=query_TEMP_DHT, DBcurs=DBcursor, DBfield=1, toJulian=True)
+	timer_HUMI_DHT = Timer(periodMins=5.0, queryLastMins=query_HUMI_DHT, DBcurs=DBcursor, DBfield=1, toJulian=True)
+
 	# setup: create initial tx and rx
 	txNormalAction.set()
 	rxNormalAction.set()
 	txNormalAction.setId(intToId(ACTION_NORMAL_ID - ACTION_TYPES_GLOBAL*2))	# ready for autoincrement
+	
+	# variables for txNormalAction text
+	txTextDef = "XXX,"+BOARD_ID+","+BOARD_A0_ID+","+TYPE_NORMAL_S+",{},{},{}"
+	txText = txTextDef
+	txTimerIsReady = False
 	
 	# loop: check timers and DB, updating txNormalAction if so
 	while (PROCESS.isAlive):
@@ -55,21 +66,35 @@ def txNormalActionManager():
 		# delay
 		time.sleep(1.0)
 		
-		# TEMP_AIR management
-		if (timer_TEMP_AIR.isReady()):
+		# check timers
+		if (timer_TEMP_LM35.isReady()):
+			txText = txTextDef.format(FUNC_GET_S, WPAR_TEMP_L, WPARID_TEMP_LM35_L)
+			txTimerIsReady = True
+		elif (timer_TEMP_DHT.isReady()):
+			txText = txTextDef.format(FUNC_GET_S, WPAR_TEMP_L, WPARID_TEMP_DHT_L)
+			txTimerIsReady = True
+		elif (timer_HUMI_DHT.isReady()):
+			txText = txTextDef.format(FUNC_GET_S, WPAR_HUMI_L, WPARID_HUMI_DHT_L)
+			txTimerIsReady = True
+
+		# if any timer is ready, set tx actions
+		if (txTimerIsReady):
+			txTimerIsReady = False
 		
 			# set tx action and wait rx action
 			try:
-				setTXwaitRX(txNormalAction, rxNormalAction, "XXX,R0,A0,NR,GET,TEMP,AIR", timeOut=5000, autoIncrement=True, checkRXid=True)
-			except RuntimeError:	# if (not PROCESS.isAlive)
+				setTXwaitRX(txNormalAction, rxNormalAction, txText, timeOut=5000, autoIncrement=True, checkRXid=True)
+			# if (not PROCESS.isAlive)
+			except RuntimeError:		
 				return
-			except OSError as te:	# if (Timeout)
+			# if (Timeout)
+			except OSError as te:		
 				LOG(LOG_ERR,"<<< WARNING: TwitterAction TimeoutError: \"{}\" >>>".format(te), logPreLn=True)
 				continue
-			except ValueError as ve:	# if (rx.ID is not as expected)
+			# if (rx.ID is not as expected)
+			except ValueError as ve:	
 				LOG(LOG_ERR,"<<< WARNING: rxTwitterAction ValueError: \"{}\" >>>".format(ve), logPreLn=True)
 				continue
-				
-		
+
 
 	

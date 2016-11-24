@@ -47,7 +47,7 @@ def txTwitterActionManager():
 	DBcursor = DBconn.cursor()
 	
 	# parameters: timers
-	timer_tweet_TEMP_AIR = Timer(periodMins=60.0)
+	timer_tweet_TEMP_DHT = Timer(periodMins=240.0)
 	timer_mentions = Timer(periodMins=1.1)
 	
 	# parameters: twitter
@@ -56,13 +56,20 @@ def txTwitterActionManager():
 	
 	# parameters: MENTIONS
 	twitter_mention_text_last = ""
-	# parameters: TEMP_AIR_TWEETS
-	TEMP_AIR_TWEETS = [
-		"Oh dear, the temperature is {:.1f} celsius, that is so grateful!",
-		"I'm willing to inform that temperature is {:.1f} celsius.",
-		"Do you see? Temperature is {:.1f} celsius, my dear sweety darling.",
-		"It is so wonderful this temperature of {:.1f} celsius. Marvelous!",
-		"Such a warmy day, it is {:.1f} celsius, wonderful!"
+	# parameters: TEMP_TWEETS
+	TEMP_TWEETS = [
+		"Oh my dear, the temperature is {:.1f} celsius, that is so grateful!",
+		"I like to inform that temperature is {:.1f} celsius",
+		"Can you see? Temperature is {:.1f} celsius, my dear sweety darling",
+		"It's so wonderful this temperature of {:.1f} celsius. Marvelous!",
+		"Such a nice day, it is {:.1f} celsius, wonderful!"
+	]
+	HUMI_TWEETS = [
+		"Oh my dear, the humidity is {:.1f}%, that is so grateful!",
+		"I like to inform that humidity is {:.1f}%",
+		"Can you see? Humidity is {:.1f}%, my dear sweety darling",
+		"It's so wonderful this humidity {:.1f}%. Marvelous!",
+		"Such a nice day, humidity is {:.1f}%, wonderful!"
 	]
 	
 	# -------------------------------------
@@ -109,14 +116,14 @@ def txTwitterActionManager():
 			twitter_mention_text = twitter_mention['text']
 			if (twitter_mention_text != twitter_mention_text_last):
 				twitter_mention_text_last = twitter_mention_text
-				
-				# MENTIONS: TEMP_AIR
 				twitter_mention_text_last_lower = twitter_mention_text_last.lower()
+
+				# MENTIONS: TEMP DHT
 				if ("temp" in twitter_mention_text_last_lower):
 				
 					# set tx action and wait rx action
 					try:
-						setTXwaitRX(txTwitterAction, rxTwitterAction, "XXX,R0,A0,TW,GET,TEMP,AIR", timeOut=5000, autoIncrement=True, checkRXid=True)
+						setTXwaitRX(txTwitterAction, rxTwitterAction, "XXX,R,A,T,GET,TEMP,DHT", timeOut=5000, autoIncrement=True, checkRXid=True)
 					except RuntimeError:	# if (not PROCESS.isAlive)
 						return
 					except OSError as te:	# if (Timeout)
@@ -126,33 +133,64 @@ def txTwitterActionManager():
 						LOG(LOG_ERR,"<<< WARNING: rxTwitterAction ValueError: \"{}\" >>>".format(ve), logPreLn=True)
 						continue
 						
-					# get last TEMP_AIR temperature from DB
-					DBcursor.execute('SELECT * FROM WEATHER WHERE WPAR=\'TEMP\' AND WPARID=\'AIR\' ORDER BY DATETIME DESC LIMIT 1;')
+					# get last TEMP_DHT temperature from DB
+					DBcursor.execute('SELECT * FROM WEATHER WHERE WPAR=\'TEMP\' AND WPARID=\'DHT\' ORDER BY DATETIME DESC LIMIT 1;')
 					DBrow = DBcursor.fetchone()
 					
-					# make a tweet about the TEMP_AIR
+					# make a tweet about the TEMP_DHT
 					if (DBrow is not None):
-						TEMP_AIR_value = DBrow[6]
-						tweetText = "@" + twitter_mention_user_screen_name + ", " + random.choice(TEMP_AIR_TWEETS).format(TEMP_AIR_value)
+						TEMP_value = DBrow[6]
+						tweetText = "@" + twitter_mention_user_screen_name + ", " + random.choice(TEMP_TWEETS).format(TEMP_value)
 						try:
 							twitter.update_status(status=tweetText, in_reply_to_status_id=twitter_mention_id)
 							LOG(LOG_INF,"Twitted succesfully: \"{}\"".format(tweetText), logPreLn=True)
 						except TwythonError as e:
 							LOG(LOG_ERR,"<<< ERROR: TwythonError: \"{}\" >>>".format(e), logPreLn=True)
 		
+				# MENTIONS: HUMI DHT
+				elif (("humidity" in twitter_mention_text_last_lower) or ("humedad" in twitter_mention_text_last_lower)):
+				
+					# set tx action and wait rx action
+					try:
+						setTXwaitRX(txTwitterAction, rxTwitterAction, "XXX,R,A,T,GET,HUMI,DHT", timeOut=5000, autoIncrement=True, checkRXid=True)
+					except RuntimeError:	# if (not PROCESS.isAlive)
+						return
+					except OSError as te:	# if (Timeout)
+						LOG(LOG_ERR,"<<< WARNING: TwitterAction TimeoutError: \"{}\" >>>".format(te), logPreLn=True)
+						continue
+					except ValueError as ve:	# if (rx.ID is not as expected)
+						LOG(LOG_ERR,"<<< WARNING: rxTwitterAction ValueError: \"{}\" >>>".format(ve), logPreLn=True)
+						continue
+						
+					# get last TEMP_DHT temperature from DB
+					DBcursor.execute('SELECT * FROM WEATHER WHERE WPAR=\'HUMI\' AND WPARID=\'DHT\' ORDER BY DATETIME DESC LIMIT 1;')
+					DBrow = DBcursor.fetchone()
+					
+					# make a tweet about the TEMP_DHT
+					if (DBrow is not None):
+						HUMI_value = DBrow[6]
+						tweetText = "@" + twitter_mention_user_screen_name + ", " + random.choice(HUMI_TWEETS).format(HUMI_value)
+						try:
+							twitter.update_status(status=tweetText, in_reply_to_status_id=twitter_mention_id)
+							LOG(LOG_INF,"Twitted succesfully: \"{}\"".format(tweetText), logPreLn=True)
+						except TwythonError as e:
+							LOG(LOG_ERR,"<<< ERROR: TwythonError: \"{}\" >>>".format(e), logPreLn=True)
+		
+		
+			
 		# AUTO TWEETS MANAGEMENT
 		
-		# TEMP_AIR management
-		if (timer_tweet_TEMP_AIR.isReady()):
+		# TEMP_DHT management
+		if (timer_tweet_TEMP_DHT.isReady()):
 		
-			# get last TEMP_AIR temperature from DB
-			DBcursor.execute('SELECT * FROM WEATHER WHERE WPAR=\'TEMP\' AND WPARID=\'AIR\' ORDER BY DATETIME DESC LIMIT 1;')
+			# get last TEMP_DHT temperature from DB
+			DBcursor.execute('SELECT * FROM WEATHER WHERE WPAR=\'TEMP\' AND WPARID=\'DHT\' ORDER BY DATETIME DESC LIMIT 1;')
 			DBrow = DBcursor.fetchone()
 			
-			# make a tweet about the TEMP_AIR
+			# make a tweet about the TEMP_DHT
 			if (DBrow is not None):
-				TEMP_AIR_value = DBrow[6]
-				tweetText = random.choice(TEMP_AIR_TWEETS).format(TEMP_AIR_value)
+				TEMP_DHT_value = DBrow[6]
+				tweetText = random.choice(TEMP_TWEETS).format(TEMP_DHT_value)
 				try:
 					twitter.update_status(status=tweetText)
 					LOG(LOG_INF,"Twitted succesfully: \"{}\"".format(tweetText), logPreLn=True)

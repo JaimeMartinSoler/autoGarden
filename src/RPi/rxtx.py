@@ -149,10 +149,11 @@ def rx(rxLoop=True):
 		intAckTx = stringToIntArray(strAckTx)
 		radio.writeAckPayload(1, intAckTx, len(intAckTx))
 
-		# RX the message
+		# RX the message (cleaning non-printable characters and the whitespace)
 		intMsgRx = []
 		radio.read(intMsgRx, radio.getDynamicPayloadSize())
 		strMsgRx = intArrayToString(intMsgRx)
+		strMsgRx = ''.join([c for c in strMsgRx if ord(c) >= ASCII_PRINT_MIN and ord(c) <= ASCII_PRINT_MAX])
 		LOG(LOG_INF, "RX: \"{}\"".format(strMsgRx))
 		LOG(LOG_INF, "  ACK_TX_payload: \"{}\"".format(strAckTx))
 		
@@ -250,33 +251,65 @@ def execute(radio, action, DBconn, DBcursor):
 	if (not action.rxReadyToExec):
 		LOG(LOG_WAR, "<<< WARNING: Action \"{}\" NOT executed, Action NOT Ready to Exec >>>".format(action.text))
 		return False
+		
+	# get parameters
+	id = action.getId()
+	txBoardId = action.getTxBoardId()
+	rxBoardId = action.getRxBoardId()
+	type = action.getType()
+	type_L = action.getType_L()
+	func = action.getFunc()
+	paramNum = action.getParamNum()
+	wpar = action.getWpar()
+	wparId = action.getWparId()
+	value = action.getValue()
 	
-	# RX: "III,TT,<AO>,MM,FFF,..."
-	LOG(LOG_DET, "    txBoardId: \"{}\"".format(action.getTxBoardId()))
-	LOG(LOG_DET, "    rxBoardId: \"{}\"".format(action.getRxBoardId()))
-	if (action.getRxBoardId()==BOARD_ID):
+	# log parameters
+	LOG(LOG_DET, "    ID: \"{}\"".format(id));
+	LOG(LOG_DET, "    txBoardId: \"{}\"".format(txBoardId))
+	LOG(LOG_DET, "    rxBoardId: \"{}\"".format(rxBoardId))
+	LOG(LOG_DET, "    type: \"{}\"".format(type))
+	LOG(LOG_DET, "    function: \"{}\"".format(func))
+	LOG(LOG_DET, "    paramNum: {}".format(paramNum))
+	LOG(LOG_DET, "    weather param: \"{}\"".format(wpar))
+	LOG(LOG_DET, "    weather param id: \"{}\"".format(wparId))
+	LOG(LOG_DET, "    value: \"{}\"".format(value))
+	
+	# BOARD_ID = RX
+	if (rxBoardId==BOARD_ID):
 
-		# "III,TT,<AO>,MM,<SET>,..."
-		LOG(LOG_DET, "    function: \"{}\"".format(action.getFunc_L()))
-		if (action.getFunc_L()==FUNC_SET_L):
+		# FUNC = SET
+		if (func==FUNC_SET_L or func==FUNC_SET_S):
 
-			# "III,TT,<AO>,MM,<SET>,WWWW,IIII"
-			LOG(LOG_DET, "    paramNum: {}".format(action.getParamNum()))
-			if (action.getParamNum()==3):
+			# PARAM NUM = 3
+			if (paramNum==3):
 
-				# "III,TT,<AO>,MM,<SET>,<T/TEMP>,IIII"
-				LOG(LOG_DET, "    weather param: \"{}\"".format(action.getWpar_L()))
-				if (action.getWpar_L()==WPAR_TEMP_L):
+				# WPAR = TEMP
+				if (wpar==WPAR_TEMP_L or wpar==WPAR_TEMP_S):
 
-					# "III,TT,<AO>,MM,<SET>,<T/TEMP>,<A/AIR>"
-					LOG(LOG_DET, "    weather param id: \"{}\"".format(action.getWparId_L()))
-					if (action.getWparId_L()==WPARID_TEMP_LM35_L):
-						DBinsert(DBconn, DBcursor, action.getType_L(), action.getWpar_L(), action.getWparId_L(), valueReal=float(action.getValue()))
+					# WPARID = LM35
+					if (wparId==WPARID_TEMP_LM35_L or wparId==WPARID_TEMP_LM35_S):
+						DBinsert(DBconn, DBcursor, type_L, WPAR_TEMP_L, WPARID_TEMP_LM35_L, valueReal=float(value))
 						action.rxExec += 1
 						return True
 
-	# TX: "III,<AO>,RR,MM,..."
-	elif (action.getTxBoardId()==BOARD_ID):
+					# WPARID = DHT (for WPAR = TEMP)
+					elif (wparId==WPARID_TEMP_DHT_L or wparId==WPARID_TEMP_DHT_S):
+						DBinsert(DBconn, DBcursor, type_L, WPAR_TEMP_L, WPARID_TEMP_DHT_L, valueReal=float(value))
+						action.rxExec += 1
+						return True
+
+				# WPAR = HUMI
+				elif (wpar==WPAR_HUMI_L or wpar==WPAR_HUMI_S):
+				
+					# WPARID = DHT (for WPAR = HUMI)
+					if (wparId==WPARID_HUMI_DHT_L or wparId==WPARID_HUMI_DHT_S):
+						DBinsert(DBconn, DBcursor, type_L, WPAR_HUMI_L, WPARID_HUMI_DHT_L, valueReal=float(value))
+						action.rxExec += 1
+						return True
+
+	# BOARD_ID = TX
+	elif (txBoardId==BOARD_ID):
 		if (action.txReadyToTx and action.txSuccess<=0):
 			tx(radio, action)
 			if (action.txSuccess>0):
