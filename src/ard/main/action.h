@@ -116,6 +116,12 @@ const long int ID_MAX = (((long int)ASCII_PRINT_RANGE) * ((long int)ASCII_PRINT_
 #define VALUE_MAX_SIZE ACTION_MAX_SIZE  // including null char '\0'
 #define VALUE_POS 7                     // position in payload char array
 
+// Value2 Parameters
+#define VALUE2_MAX_SIZE ACTION_MAX_SIZE  // including null char '\0'
+#define VALUE2_POS 8                     // position in payload char array
+
+
+
 
 class Action
 {
@@ -156,6 +162,7 @@ class Action
       void getWpar(char wpar[], int charArray = WPAR_MAX_SIZE);
       void getWparId(char wparId[], int charArray = WPARID_MAX_SIZE);
       void getValue(char value[], int charArray = VALUE_MAX_SIZE);
+      void getValue2(char value2[], int charArray = VALUE2_MAX_SIZE);
     // ----------------------------------------------------------------------
     // FUNCTIONS
     public:

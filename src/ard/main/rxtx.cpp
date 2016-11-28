@@ -173,6 +173,8 @@ bool RXTX::exec(RF24 &radio, Action &action, bool &execActionChanged)
   int paramNum;
   char wpar[WPAR_MAX_SIZE];
   char wparId[WPARID_MAX_SIZE];
+  char value[VALUE_MAX_SIZE];
+  char value2[VALUE2_MAX_SIZE];
   
   // get all parameters: char arrays initialization
   action.getId(id);
@@ -183,6 +185,8 @@ bool RXTX::exec(RF24 &radio, Action &action, bool &execActionChanged)
   paramNum = action.getParamNum();
   action.getWpar(wpar);
   action.getWparId(wparId);
+  action.getValue(value);
+  action.getValue2(value2);
   
   // get all parameters: logs
   LOG(LOG_DET, F("    ID: \""), String(id), F("\""));
@@ -193,6 +197,8 @@ bool RXTX::exec(RF24 &radio, Action &action, bool &execActionChanged)
   LOG(LOG_DET, F("    paramNum: "), String(paramNum));
   LOG(LOG_DET, F("    weather param: \""), String(wpar), F("\""));
   LOG(LOG_DET, F("    weather param id: \""), String(wparId), F("\""));
+  LOG(LOG_DET, F("    value: \""), String(value), F("\""));
+  LOG(LOG_DET, F("    value2: \""), String(value2), F("\""));
 
   // BOARD_ID = RX
   if (Action::compareCharArray(rxBoardId, BOARD_ID, sizeof(rxBoardId), sizeof(BOARD_ID))) {
@@ -201,8 +207,8 @@ bool RXTX::exec(RF24 &radio, Action &action, bool &execActionChanged)
     if (Action::compareCharArray(func,FUNC_GET_L, sizeof(func), sizeof(FUNC_GET_L)) ||
         Action::compareCharArray(func,FUNC_GET_S, sizeof(func), sizeof(FUNC_GET_S))) {
       
-      // paramNum = 2
-      if (paramNum==2) {
+      // paramNum >= 2
+      if (paramNum>=2) {
         
         // WPAR = TEMP
         if (Action::compareCharArray(wpar, WPAR_TEMP_L, sizeof(wpar), sizeof(WPAR_TEMP_L)) ||
@@ -269,7 +275,41 @@ bool RXTX::exec(RF24 &radio, Action &action, bool &execActionChanged)
             execActionChanged = true;
             return true;
           }
-        } 
+        }
+        
+        // WPAR = RAIN
+        else if (Action::compareCharArray(wpar, WPAR_RAIN_L, sizeof(wpar), sizeof(WPAR_RAIN_L)) ||
+                 Action::compareCharArray(wpar, WPAR_RAIN_S, sizeof(wpar), sizeof(WPAR_RAIN_S))) {
+                  
+          // WPARID = MH
+          if (Action::compareCharArray(wparId, WPARID_RAIN_MH_L, sizeof(wparId), sizeof(WPARID_RAIN_MH_L)) ||
+              Action::compareCharArray(wparId, WPARID_RAIN_MH_S, sizeof(wparId), sizeof(WPARID_RAIN_MH_S))) {
+            float rainMH = 0.0;
+            // NO VALUE
+            if (paramNum==2) {
+              rainMH = Sensors::getRainMH();
+            // VALUE = rainMH time
+            } else if (paramNum==3) {
+              rainMH = Sensors::getRainMH(String(value).toInt());
+            // VALUE2 = rainMH period
+            } else if (paramNum>=4) {
+              rainMH = Sensors::getRainMH(String(value).toInt(),String(value2).toInt());
+            }
+            LOG(LOG_DET, F("  Action to execute: \""), String(action.text), F("\" successfully executed"));
+            action.set(
+              Action::idAdd(String(id),ACTION_TYPES_GLOBAL) + F(",") +
+              String(BOARD_ID) + F(",") +
+              String(BOARD_R0_ID) + F(",") +
+              String(type) + F(",") +
+              String(FUNC_SET_S) + F(",") +
+              String(WPAR_RAIN_L) + F(",") +
+              String(WPARID_RAIN_MH_L) + F(",") +
+              String(rainMH)
+            );
+            execActionChanged = true;
+            return true;
+          }
+        }
       }
     }
   }

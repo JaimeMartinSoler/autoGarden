@@ -102,6 +102,10 @@ WPARID_RAIN_MH_S = 'M'
 VALUE_MAX_SIZE = ACTION_MAX_SIZE  # unlike C++, here we do NOT have to include the null char '\0')
 VALUE_POS = 7                     # position in payload char array
 
+# Value2 Parameters
+VALUE2_MAX_SIZE = ACTION_MAX_SIZE  # unlike C++, here we do NOT have to include the null char '\0')
+VALUE2_POS = 8                     # position in payload char array
+
 
 	
 # ----------------------------------------------------------------------
@@ -253,6 +257,8 @@ class Action:
 		return self.getStringInPos(WPARID_POS)
 	def getValue(self):
 		return self.getStringInPos(VALUE_POS)
+	def getValue2(self):
+		return self.getStringInPos(VALUE2_POS)
 	# getStringInPos (it checks if we go out of bounds)
 	def getStringInPos(self, pos, separator=ACTION_SEPARATOR):
 		textFields = self.textToList(separator)

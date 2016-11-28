@@ -168,6 +168,11 @@ void Action::getValue(char value[], int charArraySize) {
   // default: (int charArraySize = VALUE_MAX_SIZE)
   getCharArrayInPosition(value, charArraySize, VALUE_POS);
 }
+// getValue2(char[], int)
+void Action::getValue2(char value2[], int charArraySize) {
+  // default: (int charArraySize = VALUE2_MAX_SIZE)
+  getCharArrayInPosition(value2, charArraySize, VALUE2_POS);
+}
 
 
 

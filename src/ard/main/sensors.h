@@ -47,12 +47,18 @@ class Sensors
     static const short int NRF24_PIN_CSN;
     
     // LM35: pins
+    // Warning: it increases the resolution for LM35 if set to true, but it will affect to other analog measurements
+    static const bool SET_ANALOG_REFERENCE_INTERNAL;
     static const short int LM35_PIN_ANALOG_IN;
 
     // DHT22: pins
     // DHT sensorDHT(DHT_PIN, DHT_TYPE) declared in sensors.cpp
     static const short int DHT_PIN;
     static const short int DHT_TYPE;
+
+    // MH rain drop sensor: pins
+    static const short int MH_DIGITAL_PIN;  // pin for threshold input
+    static const short int MH_ANALOG_PIN;   // pin for analog input
 
 
     
@@ -64,9 +70,9 @@ class Sensors
       static void setupNRF24(RF24 &_radio);
       static void setupLM35();
       static void setupDHT();
+      static void setupMH();
       // TODO
       static void setupBH();
-      static void setupMH();
       
     // ----------------------------------------------------------------------
     // FUNCTIONS
@@ -74,9 +80,11 @@ class Sensors
       static float getTempLM35();
       static float getTempDHT();
       static float getHumiDHT();
+      static float getRainMH(int timeMillis = 1000, int periodMillis = 20);
+      static float getRainMH_current();
+      static bool getRainMH_digital();
       // TODO
       static float getLghtBH();
-      static float getRainBH();
 };
 
 #endif

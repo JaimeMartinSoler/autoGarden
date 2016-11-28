@@ -71,6 +71,22 @@ def txTwitterActionManager():
 		"It's so wonderful this humidity {:.1f}%. Marvelous!",
 		"Such a nice day, humidity is {:.1f}%, wonderful!"
 	]
+	RAIN_TWEETS = [
+		"Oh my dear, it's{} raining, that is so grateful!",
+		"I like to inform that it's{} raining",
+		"Can you see? it's{} raining, my dear sweety darling",
+		"It's so wonderful that it's{} raining. Marvelous!",
+		"Such a nice day, it's{} raining, wonderful!"
+	]
+	RAIN_THRESHOLD = 30.0
+	RAIN_TEXT = ""
+	RAIN_TEXT_YES = ""
+	RAIN_TEXT_NO = " NOT"
+	DEFAULT_TWEETS = [
+		"Hi there, I'm an automatic plant, mention me asking about my 'temperature', 'humidity' or the 'rain'",
+		"If you mention me asking about my 'temperature', 'humidity' or the 'rain' I will automatically answer",
+		"Try to mention me asking about my 'temperature', 'humidity' or the 'rain' I will answer by myself"
+	]
 	
 	# -------------------------------------
 	# Twitter API example: get last twitter_tweets from twitter_user and print their text field
@@ -123,7 +139,7 @@ def txTwitterActionManager():
 				
 					# set tx action and wait rx action
 					try:
-						setTXwaitRX(txTwitterAction, rxTwitterAction, "XXX,R,A,T,GET,TEMP,DHT", timeOut=5000, autoIncrement=True, checkRXid=True)
+						setTXwaitRX(txTwitterAction, rxTwitterAction, "XXX,R,A,T,G,TEMP,DHT", timeOut=5000, autoIncrement=True, checkRXid=True)
 					except RuntimeError:	# if (not PROCESS.isAlive)
 						return
 					except OSError as te:	# if (Timeout)
@@ -152,7 +168,7 @@ def txTwitterActionManager():
 				
 					# set tx action and wait rx action
 					try:
-						setTXwaitRX(txTwitterAction, rxTwitterAction, "XXX,R,A,T,GET,HUMI,DHT", timeOut=5000, autoIncrement=True, checkRXid=True)
+						setTXwaitRX(txTwitterAction, rxTwitterAction, "XXX,R,A,T,G,HUMI,DHT", timeOut=5000, autoIncrement=True, checkRXid=True)
 					except RuntimeError:	# if (not PROCESS.isAlive)
 						return
 					except OSError as te:	# if (Timeout)
@@ -176,8 +192,48 @@ def txTwitterActionManager():
 						except TwythonError as e:
 							LOG(LOG_ERR,"<<< ERROR: TwythonError: \"{}\" >>>".format(e), logPreLn=True)
 		
+				# MENTIONS: RAIN MH
+				elif (("rain" in twitter_mention_text_last_lower) or ("llueve" in twitter_mention_text_last_lower) or ("lluvi" in twitter_mention_text_last_lower) or ("llov" in twitter_mention_text_last_lower)):
+				
+					# set tx action and wait rx action
+					try:
+						setTXwaitRX(txTwitterAction, rxTwitterAction, "XXX,R,A,T,G,RAIN,MH,1000,20", timeOut=5000, autoIncrement=True, checkRXid=True)
+					except RuntimeError:	# if (not PROCESS.isAlive)
+						return
+					except OSError as te:	# if (Timeout)
+						LOG(LOG_ERR,"<<< WARNING: TwitterAction TimeoutError: \"{}\" >>>".format(te), logPreLn=True)
+						continue
+					except ValueError as ve:	# if (rx.ID is not as expected)
+						LOG(LOG_ERR,"<<< WARNING: rxTwitterAction ValueError: \"{}\" >>>".format(ve), logPreLn=True)
+						continue
+						
+					# get last TEMP_DHT temperature from DB
+					DBcursor.execute('SELECT * FROM WEATHER WHERE WPAR=\'RAIN\' AND WPARID=\'MH\' ORDER BY DATETIME DESC LIMIT 1;')
+					DBrow = DBcursor.fetchone()
+					
+					# make a tweet about the TEMP_DHT
+					if (DBrow is not None):
+						RAIN_value = DBrow[6]
+						if (RAIN_value >= RAIN_THRESHOLD):
+							RAIN_TEXT = RAIN_TEXT_YES
+						else:
+							RAIN_TEXT = RAIN_TEXT_NO
+						tweetText = "@" + twitter_mention_user_screen_name + ", " + random.choice(RAIN_TWEETS).format(RAIN_TEXT)
+						try:
+							twitter.update_status(status=tweetText, in_reply_to_status_id=twitter_mention_id)
+							LOG(LOG_INF,"Twitted succesfully: \"{}\"".format(tweetText), logPreLn=True)
+						except TwythonError as e:
+							LOG(LOG_ERR,"<<< ERROR: TwythonError: \"{}\" >>>".format(e), logPreLn=True)
 		
-			
+				# MENTIONS: ELSE
+				else: 
+					tweetText = "@" + twitter_mention_user_screen_name + ", " + random.choice(DEFAULT_TWEETS)
+					try:
+						twitter.update_status(status=tweetText, in_reply_to_status_id=twitter_mention_id)
+						LOG(LOG_INF,"Twitted succesfully: \"{}\"".format(tweetText), logPreLn=True)
+					except TwythonError as e:
+						LOG(LOG_ERR,"<<< ERROR: TwythonError: \"{}\" >>>".format(e), logPreLn=True)
+		
 		# AUTO TWEETS MANAGEMENT
 		
 		# TEMP_DHT management

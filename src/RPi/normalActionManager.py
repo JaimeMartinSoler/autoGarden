@@ -43,12 +43,14 @@ def txNormalActionManager():
 	
 	# parameters: timers queries
 	query_TEMP_LM35 = 'SELECT * FROM WEATHER WHERE WPAR=\'{}\' AND WPARID=\'{}\' ORDER BY DATETIME DESC LIMIT 1;'.format(WPAR_TEMP_L, WPARID_TEMP_LM35_L)
-	query_TEMP_DHT = 'SELECT * FROM WEATHER WHERE WPAR=\'{}\' AND WPARID=\'{}\' ORDER BY DATETIME DESC LIMIT 1;'.format(WPAR_TEMP_L, WPARID_TEMP_DHT_L)
-	query_HUMI_DHT = 'SELECT * FROM WEATHER WHERE WPAR=\'{}\' AND WPARID=\'{}\' ORDER BY DATETIME DESC LIMIT 1;'.format(WPAR_HUMI_L, WPARID_HUMI_DHT_L)
+	query_TEMP_DHT  = 'SELECT * FROM WEATHER WHERE WPAR=\'{}\' AND WPARID=\'{}\' ORDER BY DATETIME DESC LIMIT 1;'.format(WPAR_TEMP_L, WPARID_TEMP_DHT_L)
+	query_HUMI_DHT  = 'SELECT * FROM WEATHER WHERE WPAR=\'{}\' AND WPARID=\'{}\' ORDER BY DATETIME DESC LIMIT 1;'.format(WPAR_HUMI_L, WPARID_HUMI_DHT_L)
+	query_RAIN_MH   = 'SELECT * FROM WEATHER WHERE WPAR=\'{}\' AND WPARID=\'{}\' ORDER BY DATETIME DESC LIMIT 1;'.format(WPAR_RAIN_L, WPARID_RAIN_MH_L)
 	# parameters: timers
 	timer_TEMP_LM35 = Timer(periodMins=30.0, queryLastMins=query_TEMP_LM35, DBcurs=DBcursor, DBfield=1, toJulian=True)
 	timer_TEMP_DHT = Timer(periodMins=5.0, queryLastMins=query_TEMP_DHT, DBcurs=DBcursor, DBfield=1, toJulian=True)
 	timer_HUMI_DHT = Timer(periodMins=5.0, queryLastMins=query_HUMI_DHT, DBcurs=DBcursor, DBfield=1, toJulian=True)
+	timer_RAIN_MH = Timer(periodMins=5.0, queryLastMins=query_RAIN_MH, DBcurs=DBcursor, DBfield=1, toJulian=True)
 
 	# setup: create initial tx and rx
 	txNormalAction.set()
@@ -75,6 +77,11 @@ def txNormalActionManager():
 			txTimerIsReady = True
 		elif (timer_HUMI_DHT.isReady()):
 			txText = txTextDef.format(FUNC_GET_S, WPAR_HUMI_L, WPARID_HUMI_DHT_L)
+			txTimerIsReady = True
+		elif (timer_RAIN_MH.isReady()):
+			RAIN_MH_time = 1500
+			RAIN_MH_period = 50
+			txText = txTextDef.format(FUNC_GET_S, WPAR_RAIN_L, WPARID_RAIN_MH_L) + ",{},{}".format(RAIN_MH_time,RAIN_MH_period)
 			txTimerIsReady = True
 
 		# if any timer is ready, set tx actions

@@ -5,6 +5,59 @@
  
 
 --------------------------------------------------------------------------------
+## ADDING A NEW SENSOR
+Adding a new sensor requires a modification in many files, gathered here for ease of programming. Let's take the example of the new weather parameter `TEMP` and a new weather parameter id `DHT`.
+
+ 
+
+### ARDUINO: adding a new sensor
+These are the following file we would have to modify in the Arduino:
+- **action.h**: declare the corresponding `WPAR`and `WPARID`:
+    - `#define WPAR_TEMP_L "TEMP"`
+    - `#define WPAR_TEMP_S "T"`
+    - `#define WPARID_TEMP_DHT_L "DHT"`
+    - `#define WPARID_TEMP_DHT_S "D"`
+- **sensors.h**: declare the required variables, setup and getter:
+    - `static const short int DHT_PIN, DHT_TYPE;` (declare variables)
+    - `static void setupDHT();` (declare the setup)
+    - `static float getTempDHT();` (declare the getter)
+- **sensors.cpp**: develop the required variables, setup and getter:
+    - `#include "DHT.h"` (include the required libraries)
+    - `static const short int DHT_PIN = 2, DHT_TYPE = 22;` (initialize the variables)
+    - `void Sensors::setupDHT(){...}` (develop the setup)
+    - In `void Sensors::setupAll(RF24 &_radio){...}` call to `Sensors::setupDHT();`
+    - `float Sensors::getTempDHT(){...}` (develop the getter)
+- **rxtx.cpp**: add logic for the new `WPAR`and `WPARID`:
+    - `bool RXTX::exec(RF24 &radio, Action &action, bool &execActionChanged)`:
+       `// WPAR = TEMP`
+       `// WPARID = DHT`
+    - `bool RXTX::generateAction(Action &action){...}`, modify this function if required. We would have to also set the corresponding timer parameters (maybe also modifying `rxtx.h`
+
+ 
+
+### RASPBERRY Pi: adding a new sensor
+These are the following file we would have to modify in the Raspberry Pi:
+- **action.py**: declare the corresponding `WPAR`and `WPARID`:
+    - `WPAR_TEMP_L = 'TEMP'`
+    - `WPAR_TEMP_S = 'T'`
+    - `WPARID_TEMP_DHT_L = 'DHT'`
+    - `WPARID_TEMP_DHT_S = 'D'`
+- **rxtx.py**: add logic for the new `WPAR`and `WPARID`:
+    - `def execute(radio, action, DBconn, DBcursor): ...`:
+       `# WPAR = TEMP`
+       `# WPARID = DHT`
+- **normalActionManager.py**: manage timers and `txNormalAction`:
+    - `query_TEMP_DHT`, `timer_TEMP_DHT` (create the timer query and the timer)
+    - `if (timer_TEMP_DHT.isReady()): ...` (develop the logic for the `txNormalAction`)
+- **normalActionManager.py**: manage timers, twitter and `txTwitterAction`:
+    - `timer_tweet_TEMP_DHT` (create timer for `# AUTO TWEETS MANAGEMENT`)
+    - `TEMP_TWEETS` (create tweets regarding this weather parameter)
+    - `# MENTIONS: TEMP DHT` (add logic to manage mentions regarding this weather parameter) 
+    - `# AUTO TWEETS MANAGEMENT # TEMP_DHT management` (add logic to manage auto-tweets regarding this weather parameter)
+
+ 
+
+--------------------------------------------------------------------------------
 ## SETUP: SOFWARE
 Depending on the communication interface we are using (GPIO wires, NRF24L wireless) and the sensor (analog LM35, digital DHT22), there are different library setups to make:
 

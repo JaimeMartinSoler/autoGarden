@@ -73,7 +73,7 @@ def setup_NRF24(radio):
 	radio.openReadingPipe(1, pipes[PIPE_R])
 	radio.openWritingPipe(pipes[PIPE_W])
 	# rate, power
-	radio.setDataRate(NRF24.BR_1MBPS)	# with RF24_250KBPS <10% success...
+	radio.setDataRate(NRF24.BR_1MBPS)	# with NRF24.BR_250KBPS <10% success..., NRF24.BR_1MBPS OK 
 	radio.setPALevel(NRF24.PA_HIGH)
 	# print details
 	radio.printDetails()
@@ -263,6 +263,7 @@ def execute(radio, action, DBconn, DBcursor):
 	wpar = action.getWpar()
 	wparId = action.getWparId()
 	value = action.getValue()
+	value2 = action.getValue2()
 	
 	# log parameters
 	LOG(LOG_DET, "    ID: \"{}\"".format(id));
@@ -274,6 +275,7 @@ def execute(radio, action, DBconn, DBcursor):
 	LOG(LOG_DET, "    weather param: \"{}\"".format(wpar))
 	LOG(LOG_DET, "    weather param id: \"{}\"".format(wparId))
 	LOG(LOG_DET, "    value: \"{}\"".format(value))
+	LOG(LOG_DET, "    value2: \"{}\"".format(value2))
 	
 	# BOARD_ID = RX
 	if (rxBoardId==BOARD_ID):
@@ -282,7 +284,7 @@ def execute(radio, action, DBconn, DBcursor):
 		if (func==FUNC_SET_L or func==FUNC_SET_S):
 
 			# PARAM NUM = 3
-			if (paramNum==3):
+			if (paramNum>=3):
 
 				# WPAR = TEMP
 				if (wpar==WPAR_TEMP_L or wpar==WPAR_TEMP_S):
@@ -305,6 +307,15 @@ def execute(radio, action, DBconn, DBcursor):
 					# WPARID = DHT (for WPAR = HUMI)
 					if (wparId==WPARID_HUMI_DHT_L or wparId==WPARID_HUMI_DHT_S):
 						DBinsert(DBconn, DBcursor, type_L, WPAR_HUMI_L, WPARID_HUMI_DHT_L, valueReal=float(value))
+						action.rxExec += 1
+						return True
+						
+				# WPAR = RAIN
+				elif (wpar==WPAR_RAIN_L or wpar==WPAR_RAIN_S):
+				
+					# WPARID = MH
+					if (wparId==WPARID_RAIN_MH_L or wparId==WPARID_RAIN_MH_S):
+						DBinsert(DBconn, DBcursor, type_L, WPAR_RAIN_L, WPARID_RAIN_MH_L, valueReal=float(value))
 						action.rxExec += 1
 						return True
 

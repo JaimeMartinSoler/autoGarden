@@ -29,23 +29,6 @@ from actionManager import *
 
 
 
-
-# from timer import *
-# import sqlite3
-# DBconn = sqlite3.connect(DB_FILE_NAME_FULL)
-# DBcursor = DBconn.cursor()
-# tmr = Timer(periodMins=0.01, queryLastMins='SELECT * FROM WEATHER WHERE WPAR=\'TEMP\' AND WPARID=\'AIR\' ORDER BY DATETIME DESC LIMIT 1;', DBcurs=DBcursor, DBfield=1, toJulian=True)
-# print("   lastMillis = {}".format(tmr.lastMillis))
-# print("   periodMillis = {}".format(tmr.periodMillis))
-# print("   lastMins = {}".format(tmr.lastMins))
-# print("   periodMins = {}".format(tmr.periodMins))
-
-# print("\n   isReady() = {}".format(tmr.isReady()))
-# time.sleep(1.000)
-# print("\n   isReady() = {}".format(tmr.isReady()))
-# exit()
-
-
 # --------------------------------------------------------------
 # MAIN LOOP
 
@@ -75,7 +58,7 @@ def main():
 		thread_txTwitterActionManager.join()
 		# close DB
 		DBclose()
-		LOG(LOG_ERR, "KeyboardInterrupt: Threads and DB successfully closed")
+		LOG(LOG_ERR, "KeyboardInterrupt: Threads and DB successfully closed\n")
 
 		
 # --------------------------------------------------------------
