@@ -28,8 +28,8 @@ These are the following file we would have to modify in the Arduino:
     - In `void Sensors::setupAll(RF24 &_radio){...}` call to `Sensors::setupDHT();`
     - `float Sensors::getTempDHT(){...}` (develop the getter)
 - **rxtx.cpp**: add logic for the new `WPAR`and `WPARID`:
-    - `bool RXTX::exec(RF24 &radio, Action &action, bool &execActionChanged)`:
-       `// WPAR = TEMP`
+    - `bool RXTX::exec(RF24 &radio, Action &action, bool &execActionChanged)`:  
+       `// WPAR = TEMP`  
        `// WPARID = DHT`
     - `bool RXTX::generateAction(Action &action){...}`, modify this function if required. We would have to also set the corresponding timer parameters (maybe also modifying `rxtx.h`
 
@@ -43,8 +43,8 @@ These are the following file we would have to modify in the Raspberry Pi:
     - `WPARID_TEMP_DHT_L = 'DHT'`
     - `WPARID_TEMP_DHT_S = 'D'`
 - **rxtx.py**: add logic for the new `WPAR`and `WPARID`:
-    - `def execute(radio, action, DBconn, DBcursor): ...`:
-       `# WPAR = TEMP`
+    - `def execute(radio, action, DBconn, DBcursor): ...`:  
+       `# WPAR = TEMP`  
        `# WPARID = DHT`
 - **normalActionManager.py**: manage timers and `txNormalAction`:
     - `query_TEMP_DHT`, `timer_TEMP_DHT` (create the timer query and the timer)
