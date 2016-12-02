@@ -42,8 +42,8 @@ def datetimeToJulian(datetime):
 
 # nowDatetime()
 # now date and time in standard format (i.e. "2016-11-09 23:01:26")
-def nowDatetime():
-	return time.strftime('%Y-%m-%d %H:%M:%S')
+def nowDatetime(format='%Y-%m-%d %H:%M:%S'):
+	return time.strftime(format)
 
 
 # nowJulian()

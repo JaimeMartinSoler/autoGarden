@@ -24,9 +24,9 @@ from glob import *
 from DBmanager import *
 from actionManager import *
 from twython import Twython, TwythonError
-from twitterPass import APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET
+from passwords import APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET, IPCAM_NAME, IPCAM_PASS, IPCAM_IP, IPCAM_HOSTDIR
 from timer import *
-
+import subprocess
 
 
 
@@ -49,6 +49,12 @@ def txTwitterActionManager():
 	# parameters: timers
 	timer_tweet_TEMP_DHT = Timer(periodMins=240.0)
 	timer_mentions = Timer(periodMins=1.1)
+	
+	# parameters: ip camera
+	ipCamFileNameDef = 'ipcam_{}.jpg'
+	ipCamPathRel = 'cam'
+	ipCamPathFull = PROCESS.mainPath + '/' + ipCamPathRel
+	ipCamScriptDef = 'avconv -y -i "rtsp://{}:{}@{}/{}" -q:v 9 -s 1280x720 -vframes 1 {}/'.format(IPCAM_NAME, IPCAM_PASS, IPCAM_IP, IPCAM_HOSTDIR, ipCamPathFull) + '{}'
 	
 	# parameters: twitter
 	twitter = Twython(APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET)
@@ -224,6 +230,25 @@ def txTwitterActionManager():
 							LOG(LOG_INF,"Twitted succesfully: \"{}\"".format(tweetText), logPreLn=True)
 						except TwythonError as e:
 							LOG(LOG_ERR,"<<< ERROR: TwythonError: \"{}\" >>>".format(e), logPreLn=True)
+		
+				# MENTIONS: PHOTO
+				elif (("photo" in twitter_mention_text_last_lower) or ("picture" in twitter_mention_text_last_lower) or ("image" in twitter_mention_text_last_lower) or ("foto" in twitter_mention_text_last_lower)):
+					
+					# get file and script names
+					ipCamFileName = ipCamFileNameDef.format(nowDatetime('%Y%m%d_%H%M%S'))
+					ipCamFileNameFull = ipCamPathFull + '/' + ipCamFileName
+					ipCamScript = ipCamScriptDef.format(ipCamFileName)
+					
+					# call to the process to get the image from the ip cam
+					subprocess.call(ipCamScript, shell=True)
+					
+					# make a tweet about the photo
+					tweetText = "@" + twitter_mention_user_screen_name + ", " + "picture funcionality is comming soon!"
+					try:
+						twitter.update_status(status=tweetText, in_reply_to_status_id=twitter_mention_id)
+						LOG(LOG_INF,"Twitted succesfully: \"{}\"".format(tweetText), logPreLn=True)
+					except TwythonError as e:
+						LOG(LOG_ERR,"<<< ERROR: TwythonError: \"{}\" >>>".format(e), logPreLn=True)
 		
 				# MENTIONS: ELSE
 				else: 

@@ -49,6 +49,8 @@ Temporary Items
 # Custom: private information
 twitterPass.*
 twitter_pass.*
+password.py
+passwords.py
 *.private
 *.zip
 
