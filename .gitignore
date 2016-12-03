@@ -62,5 +62,6 @@ log_*
 log-*
 *.log
 
-# Data Base files
+# Data Files
+cam
 *.db

@@ -27,6 +27,8 @@ from twython import Twython, TwythonError
 from passwords import APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET, IPCAM_NAME, IPCAM_PASS, IPCAM_IP, IPCAM_HOSTDIR
 from timer import *
 import subprocess
+from PIL import Image
+from StringIO import StringIO
 
 
 
@@ -104,7 +106,7 @@ def txTwitterActionManager():
 	
 	
 	# -------------------------------------
-	# Twitter API example: get last twitter_mentions of the current user and print theis text field
+	# Twitter API example: get last twitter_mentions of the current user and print this text field
 	# twitter_mentions = 10
 	# twitter_user_mentions = twitter.get_mentions_timeline(count=twitter_mentions)
 	# print "\nTwitting mentions:"
@@ -242,10 +244,24 @@ def txTwitterActionManager():
 					# call to the process to get the image from the ip cam
 					subprocess.call(ipCamScript, shell=True)
 					
+					# get the image ready for the tweet
+					# https://twython.readthedocs.io/en/latest/usage/advanced_usage.html#updating-status-with-image
+					photo = Image.open(ipCamFileNameFull)
+					# ipCam lies on its left side: rotate 90 (anti-clockwise / to the left)
+					photo = photo.rotate(90)
+					# basewidth = 320
+					# wpercent = (basewidth / float(photo.size[0]))
+					# height = int((float(photo.size[1]) * float(wpercent)))
+					# photo = photo.resize((basewidth, height), Image.ANTIALIAS)
+					image_io = StringIO()
+					photo.save(image_io, format='JPEG')
+					image_io.seek(0)
+					response = twitter.upload_media(media=image_io)
+					
 					# make a tweet about the photo
-					tweetText = "@" + twitter_mention_user_screen_name + ", " + "picture funcionality is comming soon!"
+					tweetText = "@" + twitter_mention_user_screen_name + ", " + "this is a live picture of myself!"
 					try:
-						twitter.update_status(status=tweetText, in_reply_to_status_id=twitter_mention_id)
+						twitter.update_status(status=tweetText, in_reply_to_status_id=twitter_mention_id, media_ids=[response['media_id']])
 						LOG(LOG_INF,"Twitted succesfully: \"{}\"".format(tweetText), logPreLn=True)
 					except TwythonError as e:
 						LOG(LOG_ERR,"<<< ERROR: TwythonError: \"{}\" >>>".format(e), logPreLn=True)
