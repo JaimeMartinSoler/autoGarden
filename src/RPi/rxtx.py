@@ -123,7 +123,7 @@ def rx(rxLoop=True):
 	DBsetup(DBconn, DBcursor)
 	
 	# rx loop (if !rxLoop it breaks at the bottom)
-	while (PROCESS.isAlive):
+	while (STATUS.get("isAlive")):
 	
 		# RX start listening TX
 		radio.startListening();
@@ -131,8 +131,8 @@ def rx(rxLoop=True):
 		# RX loop: wait for a message
 		LOG(LOG_INF, "  RX waiting message...");
 		while (not radio.available()):
-			# Check PROCESS.isAlive
-			if (not PROCESS.isAlive):
+			# Check STATUS.get("isAlive")
+			if (not STATUS.get("isAlive")):
 				return False
 			# Check Normal Action to be transmitted, managed from manageNormalAction thread
 			if (txNormalAction.txReadyToTx and txNormalAction.txSuccess<=0):

@@ -63,7 +63,7 @@ def txNormalActionManager():
 	txTimerIsReady = False
 	
 	# loop: check timers and DB, updating txNormalAction if so
-	while (PROCESS.isAlive):
+	while (STATUS.get("isAlive")):
 	
 		# delay
 		time.sleep(1.0)
@@ -91,7 +91,7 @@ def txNormalActionManager():
 			# set tx action and wait rx action
 			try:
 				setTXwaitRX(txNormalAction, rxNormalAction, txText, timeOut=5000, autoIncrement=True, checkRXid=True)
-			# if (not PROCESS.isAlive)
+			# if (not STATUS.get("isAlive"))
 			except RuntimeError:		
 				return
 			# if (Timeout)

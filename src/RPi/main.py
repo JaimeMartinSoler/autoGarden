@@ -31,9 +31,11 @@ from actionManager import *
 
 # --------------------------------------------------------------
 # MAIN LOOP
-
 def main():
 
+	# mainExit control parameter
+	mainExit = False
+	
 	# create threads
 	thread_rx = threading.Thread(target=rx)
 	thread_txNormalActionManager = threading.Thread(target=txNormalActionManager)
@@ -45,21 +47,28 @@ def main():
 
 	# wait loop
 	try:
-		while(True):
+		while(STATUS.get("isAlive")):
 			time.sleep(1.0)
+		mainExit = True
 	# close threads and DB if KeyboardInterrupt
 	except KeyboardInterrupt:
-		LOG(LOG_ERR, "KeyboardInterrupt: Closing threads and DB", logPreLn=True)
-		# set PROCESS.isAlive = False
-		PROCESS.isAlive = False
+		mainExit = True
+	
+	if (mainExit):
+		LOG(LOG_ERR, "mainExit: closing threads, closing DB, restoring status...", logPreLn=True)
+		# STATUS.set("isAlive", False)
+		STATUS.set("isAlive", False)
 		# join (wait) threads
 		thread_rx.join()
 		thread_txNormalActionManager.join()
 		thread_txTwitterActionManager.join()
 		# close DB
 		DBclose()
-		LOG(LOG_ERR, "KeyboardInterrupt: Threads and DB successfully closed\n")
-
+		# restore status to default
+		STATUS.fileToDefault()
+		LOG(LOG_ERR, "mainExit: Threads and DB successfully closed\n")
+	else:
+		LOG(LOG_ERR, "<<< ERROR: main end reached but mainExit=false >>>\n", logPreLn=True)
 		
 # --------------------------------------------------------------
 # MAIN CALL

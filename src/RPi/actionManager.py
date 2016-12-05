@@ -46,7 +46,7 @@ txTwitterAction = Action()	# Action for TX Twitter actions, requests from RPi Tw
 # setTXwaitRX(txAction, rxAction, txActionText, timeOut=5000, autoIncrement=True)
 #	this function sets a txAction with txActionText and waits for the corrensponding rxAction to be ready,
 #   both txAction, rxAction must be updated externally by a rxrx.py thread.
-# 		raise RuntimeError: if (not PROCESS.isAlive)
+# 		raise RuntimeError: if (not STATUS.get("isAlive"))
 # 		raise TimeoutError: if (wait>timeOut)
 # 		raise ValueError: if (after wait, rxAction.getId() is not the expected)
 def setTXwaitRX(txAction, rxAction, txActionText, timeOut=5000, autoIncrement=True, checkRXid=True):
@@ -66,8 +66,8 @@ def setTXwaitRX(txAction, rxAction, txActionText, timeOut=5000, autoIncrement=Tr
 	
 	# wait for txAction and rxAction to be ready (rxtx.py has to deal with txAction, rxAction in another thread)
 	while(txAction.txSuccess<=0 or rxAction.rxExec<=0):
-		if (not PROCESS.isAlive):
-			raise RuntimeError("PROCESS.isAlive=false")
+		if (not STATUS.get("isAlive")):
+			raise RuntimeError("STATUS.get(\"isAlive\")=false")
 		if ((int(round(time.time()*1000)) - millis) >= timeOut):
 			raise OSError("timeOut ({}) reached. txSuccess={}, rxExec={}".format(timeOut,txAction.txSuccess,rxAction.rxExec))
 		time.sleep(0.100)

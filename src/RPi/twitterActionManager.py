@@ -121,10 +121,14 @@ def txTwitterActionManager():
 	txTwitterAction.setId(intToId(ACTION_TWITTER_ID - ACTION_TYPES_GLOBAL*2))	# ready for autoincrement
 	
 	# loop: check timers and twitter, updating txTwitterAction if so
-	while (PROCESS.isAlive):
+	while (STATUS.get("isAlive")):
 		
 		# delay
 		time.sleep(1.0)
+		
+		# check STATUS.get("twitterEnable")
+		if (not STATUS.get("twitterEnable")):
+			continue
 
 		# MENTIONS MANAGEMENT
 		if (timer_mentions.isReady()):
@@ -148,7 +152,7 @@ def txTwitterActionManager():
 					# set tx action and wait rx action
 					try:
 						setTXwaitRX(txTwitterAction, rxTwitterAction, "XXX,R,A,T,G,TEMP,DHT", timeOut=5000, autoIncrement=True, checkRXid=True)
-					except RuntimeError:	# if (not PROCESS.isAlive)
+					except RuntimeError:	# if (not STATUS.get("isAlive"))
 						return
 					except OSError as te:	# if (Timeout)
 						LOG(LOG_ERR,"<<< WARNING: TwitterAction TimeoutError: \"{}\" >>>".format(te), logPreLn=True)
@@ -177,7 +181,7 @@ def txTwitterActionManager():
 					# set tx action and wait rx action
 					try:
 						setTXwaitRX(txTwitterAction, rxTwitterAction, "XXX,R,A,T,G,HUMI,DHT", timeOut=5000, autoIncrement=True, checkRXid=True)
-					except RuntimeError:	# if (not PROCESS.isAlive)
+					except RuntimeError:	# if (not STATUS.get("isAlive"))
 						return
 					except OSError as te:	# if (Timeout)
 						LOG(LOG_ERR,"<<< WARNING: TwitterAction TimeoutError: \"{}\" >>>".format(te), logPreLn=True)
@@ -206,7 +210,7 @@ def txTwitterActionManager():
 					# set tx action and wait rx action
 					try:
 						setTXwaitRX(txTwitterAction, rxTwitterAction, "XXX,R,A,T,G,RAIN,MH,1000,20", timeOut=5000, autoIncrement=True, checkRXid=True)
-					except RuntimeError:	# if (not PROCESS.isAlive)
+					except RuntimeError:	# if (not STATUS.get("isAlive"))
 						return
 					except OSError as te:	# if (Timeout)
 						LOG(LOG_ERR,"<<< WARNING: TwitterAction TimeoutError: \"{}\" >>>".format(te), logPreLn=True)
@@ -248,7 +252,7 @@ def txTwitterActionManager():
 					# https://twython.readthedocs.io/en/latest/usage/advanced_usage.html#updating-status-with-image
 					photo = Image.open(ipCamFileNameFull)
 					# ipCam lies on its left side: rotate 90 (anti-clockwise / to the left)
-					photo = photo.rotate(90)
+					photo = photo.rotate(STATUS.get("ipCamRotation"))
 					# basewidth = 320
 					# wpercent = (basewidth / float(photo.size[0]))
 					# height = int((float(photo.size[1]) * float(wpercent)))
