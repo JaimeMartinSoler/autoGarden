@@ -30,7 +30,8 @@ DB_PATH_FULL = PROCESS.mainPath + '/' + DB_PATH_REL
 DB_FILE_NAME = 'autoGarden.db'
 DB_FILE_NAME_FULL = DB_PATH_FULL + '/' + DB_FILE_NAME
 
-
+# DB_TABLES
+DB_WEATHER_TABLE = 'WEATHER'
 
 
 # ----------------------------------------------------------------------
@@ -48,7 +49,7 @@ def DBsetup(DBconn=None, DBcursor=None):
 	elif (DBcursor==None):
 		DBcursor = DBconn.cursor()
 	DBcursor.execute('''
-		CREATE TABLE IF NOT EXISTS WEATHER (
+		CREATE TABLE IF NOT EXISTS {} (
 			ID INTEGER PRIMARY KEY AUTOINCREMENT,
 			DATETIME TEXT NOT NULL,
 			TYPE TEXT NOT NULL,
@@ -58,7 +59,7 @@ def DBsetup(DBconn=None, DBcursor=None):
 			VALUE_REA REAL,
 			VALUE_STR TEXT
 		);
-	''')
+	'''.format(DB_WEATHER_TABLE))
 	DBconn.commit()
 
 	
@@ -71,9 +72,11 @@ def DBclose(DBconn=None):
 	
 	
 # -------------------------------------
-# DBinsert(DBconn, DBcursor, type, wpar, wparId, valueInt=None, valueReal=None, valueStr=None)
-def DBinsert(DBconn, DBcursor, type, wpar, wparId, valueInt=None, valueReal=None, valueStr=None):
+# DBweatherInsert(DBconn, DBcursor, type, wpar, wparId, valueInt=None, valueReal=None, valueStr=None)
+def DBweatherInsert(DBconn, DBcursor, type, wpar, wparId, valueInt=None, valueReal=None, valueStr=None):
 	DBparams = (nowDatetime(), type, wpar, wparId, valueInt, valueReal, valueStr)
-	DBcursor.execute('INSERT INTO WEATHER(DATETIME,TYPE,WPAR,WPARID,VALUE_INT,VALUE_REA,VALUE_STR) VALUES (?,?,?,?,?,?,?);', DBparams)
+	DBcursor.execute('INSERT INTO {}(DATETIME,TYPE,WPAR,WPARID,VALUE_INT,VALUE_REA,VALUE_STR) VALUES (?,?,?,?,?,?,?);'.format(DB_WEATHER_TABLE), DBparams)
 	DBconn.commit()
+
+
 

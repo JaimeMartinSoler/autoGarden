@@ -66,7 +66,7 @@ def main():
 		DBclose()
 		# restore status to default
 		STATUS.fileToDefault()
-		LOG(LOG_ERR, "mainExit: Threads and DB successfully closed\n")
+		LOG(LOG_ERR, "mainExit: threads closed, DB closed, status restored\n")
 	else:
 		LOG(LOG_ERR, "<<< ERROR: main end reached but mainExit=false >>>\n", logPreLn=True)
 		

@@ -80,7 +80,7 @@ class Timer:
 	
     # ----------------------------------------------------------------------
     # CONSTRUCTOR
-	def __init__(self, periodMillis=-1, periodMins=-1.0, startReady=True, queryLastMins="", DBcurs=None, DBfield=1, toJulian=True):
+	def __init__(self, periodMillis=-1, periodMins=-1.0, startReady=True, queryLastMins="", DBcurs=None, DBfield=0, toJulian=True):
 	
 		# set periods
 		self.periodMillis = periodMillis

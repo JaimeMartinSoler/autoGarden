@@ -43,17 +43,24 @@ txTwitterAction = Action()	# Action for TX Twitter actions, requests from RPi Tw
 # ----------------------------------------------------------------------
 # FUNCTIONS
 
-# setTXwaitRX(txAction, rxAction, txActionText, timeOut=5000, autoIncrement=True)
-#	this function sets a txAction with txActionText and waits for the corrensponding rxAction to be ready,
-#   both txAction, rxAction must be updated externally by a rxrx.py thread.
-# 		raise RuntimeError: if (not STATUS.get("isAlive"))
-# 		raise TimeoutError: if (wait>timeOut)
-# 		raise ValueError: if (after wait, rxAction.getId() is not the expected)
-def setTXwaitRX(txAction, rxAction, txActionText, timeOut=5000, autoIncrement=True, checkRXid=True):
+# getToDB(wpar, wparId, type, id='XXX', boardIdTx=BOARD_ID, boardIdRx=BOARD_A0_ID, func=FUNC_GET_S, timeOut=5000, autoIncrement=True, checkRXid=True)
+#	this function sets the corresponding txAction/rxAction (according to type) and waits for the rxAction to be ready,
+#   both txAction, rxAction must be updated externally by the rxrx.py thread.
+def getToDB(wpar, wparId, type=TYPE_NORMAL_L, id='XXX', boardIdTx=BOARD_ID, boardIdRx=BOARD_A0_ID, func=FUNC_GET_S, append='', timeOut=5000, autoIncrement=True, checkRXid=True):
 
 	# set current millis
 	millis = int(round(time.time()*1000))
 	
+	# get the tx/rx actions (normal action by default)
+	txAction = txNormalAction
+	rxAction = rxNormalAction
+	if (getType_L(type)==TYPE_TWITTER_L):
+		txAction = txTwitterAction
+		rxAction = rxTwitterAction
+	
+	# build the txActionText
+	txActionText = '{},{},{},{},{},{},{}{}'.format(id, boardIdTx, boardIdRx, getType_S(type), getFunc_S(func), getWpar_L(wpar), getWparId_L(wparId), append)
+
 	# clear rx and set tx objects
 	txId = txAction.getId()		# backup of txAction.ID, in case of autoincrement
 	rxAction.set()				# .rxReadyToExec=False, .rxExec=0
@@ -63,17 +70,19 @@ def setTXwaitRX(txAction, rxAction, txActionText, timeOut=5000, autoIncrement=Tr
 	if (autoIncrement):
 		txAction.setId(idAdd(txId,ACTION_TYPES_GLOBAL*2))
 	txAction.txReadyToTx = True
-	
-	# wait for txAction and rxAction to be ready (rxtx.py has to deal with txAction, rxAction in another thread)
+
+	# wait for txAction and rxAction to be ready (rxtx.py has to deal with txAction, rxAction in another thread, it manages the DB inserts)
 	while(txAction.txSuccess<=0 or rxAction.rxExec<=0):
-		if (not STATUS.get("isAlive")):
-			raise RuntimeError("STATUS.get(\"isAlive\")=false")
 		if ((int(round(time.time()*1000)) - millis) >= timeOut):
-			raise OSError("timeOut ({}) reached. txSuccess={}, rxExec={}".format(timeOut,txAction.txSuccess,rxAction.rxExec))
+			LOG(LOG_WAR, "<<< WARNING: timeOut ({}) reached for \"{}\". txSuccess={}, rxExec={} >>>".format(timeOut, txActionText, txAction.txSuccess, rxAction.rxExec))
+			return False
 		time.sleep(0.100)
 
 	# check the rxAction.getId() is the expected
 	if (checkRXid and (idAdd(txAction.getId(),ACTION_TYPES_GLOBAL) != rxAction.getId())):
-		raise ValueError("expected rxAction.ID:\"{}\", recieved rxAction.ID:\"{}\"".format(idAdd(txAction.getId(),ACTION_TYPES_GLOBAL),rxAction.getId()))
+		LOG(LOG_WAR, "<<< WARNING: for \"{}\", expected rxAction.ID:\"{}\", recieved rxAction.ID:\"{}\" >>>".format(txActionText, idAdd(txAction.getId(),ACTION_TYPES_GLOBAL), rxAction.getId()))
+		return False
 	
+	return True
+
 	

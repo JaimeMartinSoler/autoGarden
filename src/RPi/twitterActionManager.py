@@ -47,6 +47,7 @@ def txTwitterActionManager():
 	# parameters: DBconn, DBcursor
 	DBconn = sqlite3.connect(DB_FILE_NAME_FULL)
 	DBcursor = DBconn.cursor()
+	DBqueryWeatherOne = 'SELECT VALUE_REA FROM WEATHER WHERE WPAR=\'{}\' AND WPARID=\'{}\' AND TYPE=\'{}\' ORDER BY DATETIME DESC LIMIT 1;'
 	
 	# parameters: timers
 	timer_tweet_TEMP_DHT = Timer(periodMins=240.0)
@@ -60,7 +61,10 @@ def txTwitterActionManager():
 	
 	# parameters: twitter
 	twitter = Twython(APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET)
-	twitter_mention = []
+	twitter_mentions_count = 10
+	twitter_mentions = [] 
+	twitter_mentions_id_last = []
+	twitter_mentions_firstExecute = True
 	
 	# parameters: MENTIONS
 	twitter_mention_text_last = ""
@@ -133,164 +137,170 @@ def txTwitterActionManager():
 		# MENTIONS MANAGEMENT
 		if (timer_mentions.isReady()):
 			
-			# get last mention
+			# get last mentions
 			try:
-				twitter_mention = twitter.get_mentions_timeline(count=1)[0]
+				twitter_mentions = twitter.get_mentions_timeline(count=twitter_mentions_count)
 			except TwythonError as e:
 				LOG(LOG_ERR,"<<< ERROR: TwythonError: \"{}\" >>>".format(e), logPreLn=True)
 				continue
-			twitter_mention_id = twitter_mention['id']
-			twitter_mention_user_screen_name = twitter_mention['user']['screen_name']
-			twitter_mention_text = twitter_mention['text']
-			if (twitter_mention_text != twitter_mention_text_last):
-				twitter_mention_text_last = twitter_mention_text
-				twitter_mention_text_last_lower = twitter_mention_text_last.lower()
+				
+			# initialize twitter_mentions_id_last (this would be improved when twitter is ready in DB)
+			if (twitter_mentions_firstExecute):
+				twitter_mentions_firstExecute = False
+				twitter_mentions_id_last = []
+				for twitter_mention in twitter_mentions:
+					twitter_mentions_id_last.append(twitter_mention['id'])
+					
+			# check if current twitter_mention_id is in twitter_mentions_id_last
+			for twitter_mention in twitter_mentions:
+				twitter_mention_id = twitter_mention['id']
+				if (twitter_mention_id not in twitter_mentions_id_last):
+				
+					# update twitter_mentions_id_last with current twitter_mention_id, delete oldest
+					twitter_mentions_id_last.append(twitter_mention_id)	# TODO: update with DB management, this is memory-unstable...
+					
+					# set twitter_mention parameters
+					twitter_mention_user_screen_name = twitter_mention['user']['screen_name']
+					twitter_mention_text = twitter_mention['text']
+					twitter_mention_text_lower = twitter_mention_text.lower()
 
-				# MENTIONS: TEMP DHT
-				if ("temp" in twitter_mention_text_last_lower):
-				
-					# set tx action and wait rx action
-					try:
-						setTXwaitRX(txTwitterAction, rxTwitterAction, "XXX,R,A,T,G,TEMP,DHT", timeOut=5000, autoIncrement=True, checkRXid=True)
-					except RuntimeError:	# if (not STATUS.get("isAlive"))
-						return
-					except OSError as te:	# if (Timeout)
-						LOG(LOG_ERR,"<<< WARNING: TwitterAction TimeoutError: \"{}\" >>>".format(te), logPreLn=True)
-						continue
-					except ValueError as ve:	# if (rx.ID is not as expected)
-						LOG(LOG_ERR,"<<< WARNING: rxTwitterAction ValueError: \"{}\" >>>".format(ve), logPreLn=True)
-						continue
-						
-					# get last TEMP_DHT temperature from DB
-					DBcursor.execute('SELECT * FROM WEATHER WHERE WPAR=\'TEMP\' AND WPARID=\'DHT\' ORDER BY DATETIME DESC LIMIT 1;')
-					DBrow = DBcursor.fetchone()
+					# MENTIONS: TEMP DHT
+					if ("temp" in twitter_mention_text_lower):
 					
-					# make a tweet about the TEMP_DHT
-					if (DBrow is not None):
-						TEMP_value = DBrow[6]
-						tweetText = "@" + twitter_mention_user_screen_name + ", " + random.choice(TEMP_TWEETS).format(TEMP_value)
+						# get new parameter to DB (set tx action and wait rx action)
+						if (not getToDB(WPAR_TEMP_L, WPARID_TEMP_DHT_L, type=TYPE_TWITTER_L)):
+							continue
+						
+						# get last TEMP_DHT temperature from DB
+						DBcursor.execute(DBqueryWeatherOne.format(WPAR_TEMP_L, WPARID_TEMP_DHT_L, TYPE_TWITTER_L))
+						DBrow = DBcursor.fetchone()
+						
+						# make a tweet about the TEMP_DHT
+						if (DBrow is not None):
+							TEMP_value = DBrow[0]
+							tweetText = "@" + twitter_mention_user_screen_name + ", " + random.choice(TEMP_TWEETS).format(TEMP_value)
+							try:
+								twitter.update_status(status=tweetText, in_reply_to_status_id=twitter_mention_id)
+								LOG(LOG_INF,"Twitted succesfully: \"{}\"".format(tweetText), logPreLn=True)
+							except TwythonError as e:
+								LOG(LOG_ERR,"<<< ERROR: TwythonError: \"{}\" >>>".format(e), logPreLn=True)
+			
+					# MENTIONS: HUMI DHT
+					elif (("humidity" in twitter_mention_text_lower) or ("humedad" in twitter_mention_text_lower)):
+					
+						# get new parameter to DB (set tx action and wait rx action)
+						if (not getToDB(WPAR_HUMI_L, WPARID_HUMI_DHT_L, type=TYPE_TWITTER_L)):
+							continue
+						
+						# get last TEMP_DHT temperature from DB
+						DBcursor.execute(DBqueryWeatherOne.format(WPAR_HUMI_L, WPARID_HUMI_DHT_L, TYPE_TWITTER_L))
+						DBrow = DBcursor.fetchone()
+
+						# make a tweet about the TEMP_DHT
+						if (DBrow is not None):
+							HUMI_value = DBrow[0]
+							tweetText = "@" + twitter_mention_user_screen_name + ", " + random.choice(HUMI_TWEETS).format(HUMI_value)
+							try:
+								twitter.update_status(status=tweetText, in_reply_to_status_id=twitter_mention_id)
+								LOG(LOG_INF,"Twitted succesfully: \"{}\"".format(tweetText), logPreLn=True)
+							except TwythonError as e:
+								LOG(LOG_ERR,"<<< ERROR: TwythonError: \"{}\" >>>".format(e), logPreLn=True)
+			
+					# MENTIONS: RAIN MH
+					elif (("rain" in twitter_mention_text_lower) or ("llueve" in twitter_mention_text_lower) or ("lluvi" in twitter_mention_text_lower) or ("llov" in twitter_mention_text_lower)):
+						
+						# get new parameter to DB (set tx action and wait rx action)
+						RAIN_MH_time = 1500
+						RAIN_MH_period = 50
+						if (not getToDB(WPAR_RAIN_L, WPARID_RAIN_MH_L, type=TYPE_TWITTER_L, append=',{},{}'.format(RAIN_MH_time, RAIN_MH_period))):
+							continue
+						
+						# get last TEMP_DHT temperature from DB
+						DBcursor.execute(DBqueryWeatherOne.format(WPAR_RAIN_L, WPARID_RAIN_MH_L, TYPE_TWITTER_L))
+						DBrow = DBcursor.fetchone()
+
+						# make a tweet about the TEMP_DHT
+						if (DBrow is not None):
+							RAIN_value = DBrow[0]
+							if (RAIN_value >= RAIN_THRESHOLD):
+								RAIN_TEXT = RAIN_TEXT_YES
+							else:
+								RAIN_TEXT = RAIN_TEXT_NO
+							tweetText = "@" + twitter_mention_user_screen_name + ", " + random.choice(RAIN_TWEETS).format(RAIN_TEXT)
+							try:
+								twitter.update_status(status=tweetText, in_reply_to_status_id=twitter_mention_id)
+								LOG(LOG_INF,"Twitted succesfully: \"{}\"".format(tweetText), logPreLn=True)
+							except TwythonError as e:
+								LOG(LOG_ERR,"<<< ERROR: TwythonError: \"{}\" >>>".format(e), logPreLn=True)
+			
+					# MENTIONS: PHOTO
+					elif (("photo" in twitter_mention_text_lower) or ("picture" in twitter_mention_text_lower) or ("image" in twitter_mention_text_lower) or ("foto" in twitter_mention_text_lower)):
+						
+						# get file and script names
+						ipCamFileName = ipCamFileNameDef.format(nowDatetime('%Y%m%d_%H%M%S'))
+						ipCamFileNameFull = ipCamPathFull + '/' + ipCamFileName
+						ipCamScript = ipCamScriptDef.format(ipCamFileName)
+						
+						try:
+							# call to the process to get the image from the ip cam
+							subprocess.call(ipCamScript, shell=True)
+
+							# get the image ready for the tweet
+							# https://twython.readthedocs.io/en/latest/usage/advanced_usage.html#updating-status-with-image
+							photo = Image.open(ipCamFileNameFull)
+							# ipCam lies on its left side: rotate 90 (anti-clockwise / to the left)
+							photo = photo.rotate(STATUS.get("ipCamRotation"))
+							# basewidth = 320
+							# wpercent = (basewidth / float(photo.size[0]))
+							# height = int((float(photo.size[1]) * float(wpercent)))
+							# photo = photo.resize((basewidth, height), Image.ANTIALIAS)
+							image_io = StringIO()
+							photo.save(image_io, format='JPEG')
+							image_io.seek(0)
+							response = twitter.upload_media(media=image_io)
+							
+							# make a tweet about the photo
+							tweetText = "@" + twitter_mention_user_screen_name + ", " + "this is a live picture of myself!"
+							try:
+								twitter.update_status(status=tweetText, in_reply_to_status_id=twitter_mention_id, media_ids=[response['media_id']])
+								LOG(LOG_INF,"Twitted succesfully: \"{}\"".format(tweetText), logPreLn=True)
+							except TwythonError as e:
+								LOG(LOG_ERR,"<<< ERROR: TwythonError: \"{}\" >>>".format(e), logPreLn=True)
+								
+						except:
+							LOG(LOG_ERR,"<<< ERROR: ipCam error: \"{}\" >>>".format("unknown error"), logPreLn=True)
+							tweetText = "@" + twitter_mention_user_screen_name + ", " + "oops, there was an error capture the photo =(!"
+							try:
+								twitter.update_status(status=tweetText, in_reply_to_status_id=twitter_mention_id)
+								LOG(LOG_INF,"Twitted succesfully: \"{}\"".format(tweetText), logPreLn=True)
+							except TwythonError as e:
+								LOG(LOG_ERR,"<<< ERROR: TwythonError: \"{}\" >>>".format(e), logPreLn=True)
+						
+					# MENTIONS: ELSE
+					else: 
+						tweetText = "@" + twitter_mention_user_screen_name + ", " + random.choice(DEFAULT_TWEETS)
 						try:
 							twitter.update_status(status=tweetText, in_reply_to_status_id=twitter_mention_id)
 							LOG(LOG_INF,"Twitted succesfully: \"{}\"".format(tweetText), logPreLn=True)
 						except TwythonError as e:
 							LOG(LOG_ERR,"<<< ERROR: TwythonError: \"{}\" >>>".format(e), logPreLn=True)
-		
-				# MENTIONS: HUMI DHT
-				elif (("humidity" in twitter_mention_text_last_lower) or ("humedad" in twitter_mention_text_last_lower)):
-				
-					# set tx action and wait rx action
-					try:
-						setTXwaitRX(txTwitterAction, rxTwitterAction, "XXX,R,A,T,G,HUMI,DHT", timeOut=5000, autoIncrement=True, checkRXid=True)
-					except RuntimeError:	# if (not STATUS.get("isAlive"))
-						return
-					except OSError as te:	# if (Timeout)
-						LOG(LOG_ERR,"<<< WARNING: TwitterAction TimeoutError: \"{}\" >>>".format(te), logPreLn=True)
-						continue
-					except ValueError as ve:	# if (rx.ID is not as expected)
-						LOG(LOG_ERR,"<<< WARNING: rxTwitterAction ValueError: \"{}\" >>>".format(ve), logPreLn=True)
-						continue
-						
-					# get last TEMP_DHT temperature from DB
-					DBcursor.execute('SELECT * FROM WEATHER WHERE WPAR=\'HUMI\' AND WPARID=\'DHT\' ORDER BY DATETIME DESC LIMIT 1;')
-					DBrow = DBcursor.fetchone()
-					
-					# make a tweet about the TEMP_DHT
-					if (DBrow is not None):
-						HUMI_value = DBrow[6]
-						tweetText = "@" + twitter_mention_user_screen_name + ", " + random.choice(HUMI_TWEETS).format(HUMI_value)
-						try:
-							twitter.update_status(status=tweetText, in_reply_to_status_id=twitter_mention_id)
-							LOG(LOG_INF,"Twitted succesfully: \"{}\"".format(tweetText), logPreLn=True)
-						except TwythonError as e:
-							LOG(LOG_ERR,"<<< ERROR: TwythonError: \"{}\" >>>".format(e), logPreLn=True)
-		
-				# MENTIONS: RAIN MH
-				elif (("rain" in twitter_mention_text_last_lower) or ("llueve" in twitter_mention_text_last_lower) or ("lluvi" in twitter_mention_text_last_lower) or ("llov" in twitter_mention_text_last_lower)):
-				
-					# set tx action and wait rx action
-					try:
-						setTXwaitRX(txTwitterAction, rxTwitterAction, "XXX,R,A,T,G,RAIN,MH,1000,20", timeOut=5000, autoIncrement=True, checkRXid=True)
-					except RuntimeError:	# if (not STATUS.get("isAlive"))
-						return
-					except OSError as te:	# if (Timeout)
-						LOG(LOG_ERR,"<<< WARNING: TwitterAction TimeoutError: \"{}\" >>>".format(te), logPreLn=True)
-						continue
-					except ValueError as ve:	# if (rx.ID is not as expected)
-						LOG(LOG_ERR,"<<< WARNING: rxTwitterAction ValueError: \"{}\" >>>".format(ve), logPreLn=True)
-						continue
-						
-					# get last TEMP_DHT temperature from DB
-					DBcursor.execute('SELECT * FROM WEATHER WHERE WPAR=\'RAIN\' AND WPARID=\'MH\' ORDER BY DATETIME DESC LIMIT 1;')
-					DBrow = DBcursor.fetchone()
-					
-					# make a tweet about the TEMP_DHT
-					if (DBrow is not None):
-						RAIN_value = DBrow[6]
-						if (RAIN_value >= RAIN_THRESHOLD):
-							RAIN_TEXT = RAIN_TEXT_YES
-						else:
-							RAIN_TEXT = RAIN_TEXT_NO
-						tweetText = "@" + twitter_mention_user_screen_name + ", " + random.choice(RAIN_TWEETS).format(RAIN_TEXT)
-						try:
-							twitter.update_status(status=tweetText, in_reply_to_status_id=twitter_mention_id)
-							LOG(LOG_INF,"Twitted succesfully: \"{}\"".format(tweetText), logPreLn=True)
-						except TwythonError as e:
-							LOG(LOG_ERR,"<<< ERROR: TwythonError: \"{}\" >>>".format(e), logPreLn=True)
-		
-				# MENTIONS: PHOTO
-				elif (("photo" in twitter_mention_text_last_lower) or ("picture" in twitter_mention_text_last_lower) or ("image" in twitter_mention_text_last_lower) or ("foto" in twitter_mention_text_last_lower)):
-					
-					# get file and script names
-					ipCamFileName = ipCamFileNameDef.format(nowDatetime('%Y%m%d_%H%M%S'))
-					ipCamFileNameFull = ipCamPathFull + '/' + ipCamFileName
-					ipCamScript = ipCamScriptDef.format(ipCamFileName)
-					
-					# call to the process to get the image from the ip cam
-					subprocess.call(ipCamScript, shell=True)
-					
-					# get the image ready for the tweet
-					# https://twython.readthedocs.io/en/latest/usage/advanced_usage.html#updating-status-with-image
-					photo = Image.open(ipCamFileNameFull)
-					# ipCam lies on its left side: rotate 90 (anti-clockwise / to the left)
-					photo = photo.rotate(STATUS.get("ipCamRotation"))
-					# basewidth = 320
-					# wpercent = (basewidth / float(photo.size[0]))
-					# height = int((float(photo.size[1]) * float(wpercent)))
-					# photo = photo.resize((basewidth, height), Image.ANTIALIAS)
-					image_io = StringIO()
-					photo.save(image_io, format='JPEG')
-					image_io.seek(0)
-					response = twitter.upload_media(media=image_io)
-					
-					# make a tweet about the photo
-					tweetText = "@" + twitter_mention_user_screen_name + ", " + "this is a live picture of myself!"
-					try:
-						twitter.update_status(status=tweetText, in_reply_to_status_id=twitter_mention_id, media_ids=[response['media_id']])
-						LOG(LOG_INF,"Twitted succesfully: \"{}\"".format(tweetText), logPreLn=True)
-					except TwythonError as e:
-						LOG(LOG_ERR,"<<< ERROR: TwythonError: \"{}\" >>>".format(e), logPreLn=True)
-		
-				# MENTIONS: ELSE
-				else: 
-					tweetText = "@" + twitter_mention_user_screen_name + ", " + random.choice(DEFAULT_TWEETS)
-					try:
-						twitter.update_status(status=tweetText, in_reply_to_status_id=twitter_mention_id)
-						LOG(LOG_INF,"Twitted succesfully: \"{}\"".format(tweetText), logPreLn=True)
-					except TwythonError as e:
-						LOG(LOG_ERR,"<<< ERROR: TwythonError: \"{}\" >>>".format(e), logPreLn=True)
-		
+			
 		# AUTO TWEETS MANAGEMENT
 		
 		# TEMP_DHT management
 		if (timer_tweet_TEMP_DHT.isReady()):
 		
+			# get new parameter to DB (set tx action and wait rx action)
+			if (not getToDB(WPAR_TEMP_L, WPARID_TEMP_DHT_L, type=TYPE_TWITTER_L)):
+				continue
+			
 			# get last TEMP_DHT temperature from DB
-			DBcursor.execute('SELECT * FROM WEATHER WHERE WPAR=\'TEMP\' AND WPARID=\'DHT\' ORDER BY DATETIME DESC LIMIT 1;')
+			DBcursor.execute(DBqueryWeatherOne.format(WPAR_TEMP_L, WPARID_TEMP_DHT_L, TYPE_TWITTER_L))
 			DBrow = DBcursor.fetchone()
 			
 			# make a tweet about the TEMP_DHT
 			if (DBrow is not None):
-				TEMP_DHT_value = DBrow[6]
+				TEMP_DHT_value = DBrow[0]
 				tweetText = random.choice(TEMP_TWEETS).format(TEMP_DHT_value)
 				try:
 					twitter.update_status(status=tweetText)

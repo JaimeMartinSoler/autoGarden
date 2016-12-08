@@ -119,7 +119,7 @@ VALUE2_POS = 8                     # position in payload char array
 # return: strId + addition (taking care of type conversions, etc)
 def idAdd(strId, addition):
 	if (len(strId) != ID_MAX_SIZE):
-		raise ValueError("len(strId)="+len(strId)+" != ID_MAX_SIZE="+ID_MAX_SIZE)
+		raise ValueError("len(strId)={} != ID_MAX_SIZE={}".format(len(strId),ID_MAX_SIZE))
 	return intToId(idToInt(strId) + addition)
 
 
@@ -131,7 +131,7 @@ def idToInt(strId):
 	v = 0
 	intId = 0
 	if (len(strId) != ID_MAX_SIZE):
-		raise ValueError("len(strId)="+len(strId)+" != ID_MAX_SIZE="+ID_MAX_SIZE)
+		raise ValueError("len(strId)={} != ID_MAX_SIZE={}".format(len(strId),ID_MAX_SIZE))
 	for i in range(0,ID_MAX_SIZE):
 		v = ord(strId[i]) - ASCII_PRINT_MIN;
 		if ((v < 0) or (v > ASCII_PRINT_RANGE)):
@@ -324,4 +324,118 @@ class Action:
 	def textToList(self, separator=ACTION_SEPARATOR):
 		return [self.text[:ID_MAX_SIZE]] + self.text[ID_MAX_SIZE+1:].split(ACTION_SEPARATOR)
 
+
+		
+
+# ----------------------------------------------------------------------
+# FUNCTIONS STATIC
 	
+# static getType_S()
+def getType_S(p):
+	if (len(p) == 1):
+		return p
+	elif (p==TYPE_NORMAL_L):
+		return TYPE_NORMAL_S
+	elif (p==TYPE_TWITTER_L):
+		return TYPE_TWITTER_S
+	elif (p==TYPE_ARDUINO_L):
+		return TYPE_ARDUINO_S
+	else:
+		return ''
+# static getType_L()
+def getType_L(p):
+	if (len(p) > 1):
+		return p
+	elif (p==TYPE_NORMAL_S):
+		return TYPE_NORMAL_L
+	elif (p==TYPE_TWITTER_S):
+		return TYPE_TWITTER_L
+	elif (p==TYPE_ARDUINO_S):
+		return TYPE_ARDUINO_L
+	else:
+		return ''
+	
+# static getFunc_S()
+def getFunc_S(p):
+	if (len(p) == 1):
+		return p
+	elif (p==FUNC_GET_L):
+		return FUNC_GET_S
+	elif (p==FUNC_SET_L):
+		return FUNC_SET_S
+	else:
+		return ''	
+# static getFunc_L()
+def getFunc_L(p):
+	if (len(p) > 1):
+		return p
+	elif (p==FUNC_GET_S):
+		return FUNC_GET_L
+	elif (p==FUNC_SET_S):
+		return FUNC_SET_L
+	else:
+		return ''
+	
+# static getWpar_S()
+def getWpar_S(p):
+	if (len(p) == 1):
+		return p
+	elif (p==WPAR_TEMP_L):
+		return WPAR_TEMP_S
+	elif (p==WPAR_HUMI_L):
+		return WPAR_HUMI_S
+	elif (p==WPAR_LGHT_L):
+		return WPAR_LGHT_S
+	elif (p==WPAR_RAIN_L):
+		return WPAR_RAIN_S
+	else:
+		return ''
+# static getWpar_L()
+def getWpar_L(p):
+	if (len(p) > 1):
+		return p
+	elif (p==WPAR_TEMP_S):
+		return WPAR_TEMP_L
+	elif (p==WPAR_HUMI_S):
+		return WPAR_HUMI_L
+	elif (p==WPAR_LGHT_S):
+		return WPAR_LGHT_L
+	elif (p==WPAR_RAIN_S):
+		return WPAR_RAIN_L
+	else:
+		return ''
+		
+# static getWparId_S()
+def getWparId_S(p):
+	if (len(p) == 1):
+		return p
+	elif (p==WPARID_TEMP_LM35_L):
+		return WPARID_TEMP_LM35_S
+	elif (p==WPARID_TEMP_DHT_L):
+		return WPARID_TEMP_DHT_S
+	elif (p==WPARID_HUMI_DHT_L):
+		return WPARID_HUMI_DHT_S
+	elif (p==WPARID_LGHT_BH_L):
+		return WPARID_LGHT_BH_S
+	elif (p==WPARID_RAIN_MH_L):
+		return WPARID_RAIN_MH_S
+	else:
+		return ''
+# static getWparId_L()
+def getWparId_L(p):
+	if (len(p) > 1):
+		return p
+	elif (p==WPARID_TEMP_LM35_S):
+		return WPARID_TEMP_LM35_L
+	elif (p==WPARID_TEMP_DHT_S):
+		return WPARID_TEMP_DHT_L
+	elif (p==WPARID_HUMI_DHT_S):
+		return WPARID_HUMI_DHT_L
+	elif (p==WPARID_LGHT_BH_S):
+		return WPARID_LGHT_BH_L
+	elif (p==WPARID_RAIN_MH_S):
+		return WPARID_RAIN_MH_L
+	else:
+		return ''			
+
+		

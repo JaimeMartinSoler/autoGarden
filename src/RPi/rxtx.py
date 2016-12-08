@@ -291,13 +291,13 @@ def execute(radio, action, DBconn, DBcursor):
 
 					# WPARID = LM35
 					if (wparId==WPARID_TEMP_LM35_L or wparId==WPARID_TEMP_LM35_S):
-						DBinsert(DBconn, DBcursor, type_L, WPAR_TEMP_L, WPARID_TEMP_LM35_L, valueReal=float(value))
+						DBweatherInsert(DBconn, DBcursor, type_L, WPAR_TEMP_L, WPARID_TEMP_LM35_L, valueReal=float(value))
 						action.rxExec += 1
 						return True
 
 					# WPARID = DHT (for WPAR = TEMP)
 					elif (wparId==WPARID_TEMP_DHT_L or wparId==WPARID_TEMP_DHT_S):
-						DBinsert(DBconn, DBcursor, type_L, WPAR_TEMP_L, WPARID_TEMP_DHT_L, valueReal=float(value))
+						DBweatherInsert(DBconn, DBcursor, type_L, WPAR_TEMP_L, WPARID_TEMP_DHT_L, valueReal=float(value))
 						action.rxExec += 1
 						return True
 
@@ -306,7 +306,7 @@ def execute(radio, action, DBconn, DBcursor):
 				
 					# WPARID = DHT (for WPAR = HUMI)
 					if (wparId==WPARID_HUMI_DHT_L or wparId==WPARID_HUMI_DHT_S):
-						DBinsert(DBconn, DBcursor, type_L, WPAR_HUMI_L, WPARID_HUMI_DHT_L, valueReal=float(value))
+						DBweatherInsert(DBconn, DBcursor, type_L, WPAR_HUMI_L, WPARID_HUMI_DHT_L, valueReal=float(value))
 						action.rxExec += 1
 						return True
 						
@@ -315,7 +315,7 @@ def execute(radio, action, DBconn, DBcursor):
 				
 					# WPARID = MH
 					if (wparId==WPARID_RAIN_MH_L or wparId==WPARID_RAIN_MH_S):
-						DBinsert(DBconn, DBcursor, type_L, WPAR_RAIN_L, WPARID_RAIN_MH_L, valueReal=float(value))
+						DBweatherInsert(DBconn, DBcursor, type_L, WPAR_RAIN_L, WPARID_RAIN_MH_L, valueReal=float(value))
 						action.rxExec += 1
 						return True
 

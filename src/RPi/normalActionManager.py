@@ -42,27 +42,28 @@ def txNormalActionManager():
 	DBcursor = DBconn.cursor()
 	
 	# parameters: timers queries
-	query_TEMP_LM35 = 'SELECT * FROM WEATHER WHERE WPAR=\'{}\' AND WPARID=\'{}\' ORDER BY DATETIME DESC LIMIT 1;'.format(WPAR_TEMP_L, WPARID_TEMP_LM35_L)
-	query_TEMP_DHT  = 'SELECT * FROM WEATHER WHERE WPAR=\'{}\' AND WPARID=\'{}\' ORDER BY DATETIME DESC LIMIT 1;'.format(WPAR_TEMP_L, WPARID_TEMP_DHT_L)
-	query_HUMI_DHT  = 'SELECT * FROM WEATHER WHERE WPAR=\'{}\' AND WPARID=\'{}\' ORDER BY DATETIME DESC LIMIT 1;'.format(WPAR_HUMI_L, WPARID_HUMI_DHT_L)
-	query_RAIN_MH   = 'SELECT * FROM WEATHER WHERE WPAR=\'{}\' AND WPARID=\'{}\' ORDER BY DATETIME DESC LIMIT 1;'.format(WPAR_RAIN_L, WPARID_RAIN_MH_L)
+	query_DATETIME = 'SELECT DATETIME FROM WEATHER WHERE WPAR=\'{}\' AND WPARID=\'{}\' AND TYPE=\'{}\' ORDER BY DATETIME DESC LIMIT 1;'
+	query_TEMP_LM35 = query_DATETIME.format(WPAR_TEMP_L, WPARID_TEMP_LM35_L, TYPE_NORMAL_L)
+	query_TEMP_DHT  = query_DATETIME.format(WPAR_TEMP_L, WPARID_TEMP_DHT_L, TYPE_NORMAL_L)
+	query_HUMI_DHT  = query_DATETIME.format(WPAR_HUMI_L, WPARID_HUMI_DHT_L, TYPE_NORMAL_L)
+	query_RAIN_MH   = query_DATETIME.format(WPAR_RAIN_L, WPARID_RAIN_MH_L, TYPE_NORMAL_L)
 	# parameters: timers
-	timer_TEMP_LM35 = Timer(periodMins=30.0, queryLastMins=query_TEMP_LM35, DBcurs=DBcursor, DBfield=1, toJulian=True)
-	timer_TEMP_DHT = Timer(periodMins=5.0, queryLastMins=query_TEMP_DHT, DBcurs=DBcursor, DBfield=1, toJulian=True)
-	timer_HUMI_DHT = Timer(periodMins=5.0, queryLastMins=query_HUMI_DHT, DBcurs=DBcursor, DBfield=1, toJulian=True)
-	timer_RAIN_MH = Timer(periodMins=5.0, queryLastMins=query_RAIN_MH, DBcurs=DBcursor, DBfield=1, toJulian=True)
+	timer_TEMP_LM35 = Timer(periodMins=30.0, queryLastMins=query_TEMP_LM35, DBcurs=DBcursor, toJulian=True)
+	timer_TEMP_DHT = Timer(periodMins=5.0, queryLastMins=query_TEMP_DHT, DBcurs=DBcursor, toJulian=True)
+	timer_HUMI_DHT = Timer(periodMins=5.0, queryLastMins=query_HUMI_DHT, DBcurs=DBcursor, toJulian=True)
+	timer_RAIN_MH = Timer(periodMins=5.0, queryLastMins=query_RAIN_MH, DBcurs=DBcursor, toJulian=True)
 
 	# setup: create initial tx and rx
 	txNormalAction.set()
 	rxNormalAction.set()
 	txNormalAction.setId(intToId(ACTION_NORMAL_ID - ACTION_TYPES_GLOBAL*2))	# ready for autoincrement
 	
-	# variables for txNormalAction text
-	txTextDef = "XXX,"+BOARD_ID+","+BOARD_A0_ID+","+TYPE_NORMAL_S+",{},{},{}"
-	txText = txTextDef
-	txTimerIsReady = False
+	# other parameters
+	RAIN_MH_time = 1500
+	RAIN_MH_period = 50
+	RAIN_MH_append = ',{},{}'.format(RAIN_MH_time, RAIN_MH_period)
 	
-	# loop: check timers and DB, updating txNormalAction if so
+	# loop: check timers and DB, updating txNormalAction (getToDB) if so
 	while (STATUS.get("isAlive")):
 	
 		# delay
@@ -70,38 +71,13 @@ def txNormalActionManager():
 		
 		# check timers
 		if (timer_TEMP_LM35.isReady()):
-			txText = txTextDef.format(FUNC_GET_S, WPAR_TEMP_L, WPARID_TEMP_LM35_L)
-			txTimerIsReady = True
+			getToDB(WPAR_TEMP_L, WPARID_TEMP_LM35_L, type=TYPE_NORMAL_L)
 		elif (timer_TEMP_DHT.isReady()):
-			txText = txTextDef.format(FUNC_GET_S, WPAR_TEMP_L, WPARID_TEMP_DHT_L)
-			txTimerIsReady = True
+			getToDB(WPAR_TEMP_L, WPARID_TEMP_DHT_L, type=TYPE_NORMAL_L)
 		elif (timer_HUMI_DHT.isReady()):
-			txText = txTextDef.format(FUNC_GET_S, WPAR_HUMI_L, WPARID_HUMI_DHT_L)
-			txTimerIsReady = True
+			getToDB(WPAR_HUMI_L, WPARID_HUMI_DHT_L, type=TYPE_NORMAL_L)
 		elif (timer_RAIN_MH.isReady()):
-			RAIN_MH_time = 1500
-			RAIN_MH_period = 50
-			txText = txTextDef.format(FUNC_GET_S, WPAR_RAIN_L, WPARID_RAIN_MH_L) + ",{},{}".format(RAIN_MH_time,RAIN_MH_period)
-			txTimerIsReady = True
-
-		# if any timer is ready, set tx actions
-		if (txTimerIsReady):
-			txTimerIsReady = False
-		
-			# set tx action and wait rx action
-			try:
-				setTXwaitRX(txNormalAction, rxNormalAction, txText, timeOut=5000, autoIncrement=True, checkRXid=True)
-			# if (not STATUS.get("isAlive"))
-			except RuntimeError:		
-				return
-			# if (Timeout)
-			except OSError as te:		
-				LOG(LOG_ERR,"<<< WARNING: TwitterAction TimeoutError: \"{}\" >>>".format(te), logPreLn=True)
-				continue
-			# if (rx.ID is not as expected)
-			except ValueError as ve:	
-				LOG(LOG_ERR,"<<< WARNING: rxTwitterAction ValueError: \"{}\" >>>".format(ve), logPreLn=True)
-				continue
+			getToDB(WPAR_RAIN_L, WPARID_RAIN_MH_L, type=TYPE_NORMAL_L, append=RAIN_MH_append)
 
 
 	
