@@ -42,6 +42,7 @@ These are the following file we would have to modify in the Raspberry Pi:
     - `WPAR_TEMP_S = 'T'`
     - `WPARID_TEMP_DHT_L = 'DHT'`
     - `WPARID_TEMP_DHT_S = 'D'`
+[//]: # (TODO: ADD REFERENCE TO getWpar_L, etc...)
 - **rxtx.py**: add logic for the new `WPAR`and `WPARID`:
     - `def execute(radio, action, DBconn, DBcursor): ...`:  
        `# WPAR = TEMP`  
