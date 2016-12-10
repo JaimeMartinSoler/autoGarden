@@ -49,9 +49,15 @@ def txTwitterActionManager():
 	DBcursor = DBconn.cursor()
 	DBqueryWeatherOne = 'SELECT VALUE_REA FROM WEATHER WHERE WPAR=\'{}\' AND WPARID=\'{}\' AND TYPE=\'{}\' ORDER BY DATETIME DESC LIMIT 1;'
 	
+	# parameters: Timer related
+	twitter_window_offset = 1.1
+	twitter_window_mins = 15.0
+	get_mentions_timeline_limit = 75.0
+	get_mentions_timeline_periodMin = (twitter_window_mins / get_mentions_timeline_limit) * twitter_window_offset
+	
 	# parameters: timers
 	timer_tweet_TEMP_DHT = Timer(periodMins=240.0)
-	timer_mentions = Timer(periodMins=1.1)
+	timer_mentions = Timer(periodMins=get_mentions_timeline_periodMin)
 	
 	# parameters: ip camera
 	ipCamFileNameDef = 'ipcam_{}.jpg'
@@ -65,6 +71,7 @@ def txTwitterActionManager():
 	twitter_mentions = [] 
 	twitter_mentions_id_last = []
 	twitter_mentions_firstExecute = True
+	twitter_mention_replied = False
 	
 	# parameters: MENTIONS
 	twitter_mention_text_last = ""
@@ -150,7 +157,7 @@ def txTwitterActionManager():
 				twitter_mentions_id_last = []
 				for twitter_mention in twitter_mentions:
 					twitter_mentions_id_last.append(twitter_mention['id'])
-					
+			
 			# check if current twitter_mention_id is in twitter_mentions_id_last
 			for twitter_mention in twitter_mentions:
 				twitter_mention_id = twitter_mention['id']
@@ -163,6 +170,7 @@ def txTwitterActionManager():
 					twitter_mention_user_screen_name = twitter_mention['user']['screen_name']
 					twitter_mention_text = twitter_mention['text']
 					twitter_mention_text_lower = twitter_mention_text.lower()
+					twitter_mention_replied = False
 
 					# MENTIONS: TEMP DHT
 					if ("temp" in twitter_mention_text_lower):
@@ -181,12 +189,13 @@ def txTwitterActionManager():
 							tweetText = "@" + twitter_mention_user_screen_name + ", " + random.choice(TEMP_TWEETS).format(TEMP_value)
 							try:
 								twitter.update_status(status=tweetText, in_reply_to_status_id=twitter_mention_id)
+								twitter_mention_replied = True
 								LOG(LOG_INF,"Twitted succesfully: \"{}\"".format(tweetText), logPreLn=True)
 							except TwythonError as e:
 								LOG(LOG_ERR,"<<< ERROR: TwythonError: \"{}\" >>>".format(e), logPreLn=True)
 			
 					# MENTIONS: HUMI DHT
-					elif (("humidity" in twitter_mention_text_lower) or ("humedad" in twitter_mention_text_lower)):
+					if (("humidity" in twitter_mention_text_lower) or ("humedad" in twitter_mention_text_lower)):
 					
 						# get new parameter to DB (set tx action and wait rx action)
 						if (not getToDB(WPAR_HUMI_L, WPARID_HUMI_DHT_L, type=TYPE_TWITTER_L)):
@@ -202,12 +211,13 @@ def txTwitterActionManager():
 							tweetText = "@" + twitter_mention_user_screen_name + ", " + random.choice(HUMI_TWEETS).format(HUMI_value)
 							try:
 								twitter.update_status(status=tweetText, in_reply_to_status_id=twitter_mention_id)
+								twitter_mention_replied = True
 								LOG(LOG_INF,"Twitted succesfully: \"{}\"".format(tweetText), logPreLn=True)
 							except TwythonError as e:
 								LOG(LOG_ERR,"<<< ERROR: TwythonError: \"{}\" >>>".format(e), logPreLn=True)
 			
 					# MENTIONS: RAIN MH
-					elif (("rain" in twitter_mention_text_lower) or ("llueve" in twitter_mention_text_lower) or ("lluvi" in twitter_mention_text_lower) or ("llov" in twitter_mention_text_lower)):
+					if (("rain" in twitter_mention_text_lower) or ("llueve" in twitter_mention_text_lower) or ("lluvi" in twitter_mention_text_lower) or ("llov" in twitter_mention_text_lower)):
 						
 						# get new parameter to DB (set tx action and wait rx action)
 						RAIN_MH_time = 1500
@@ -229,12 +239,13 @@ def txTwitterActionManager():
 							tweetText = "@" + twitter_mention_user_screen_name + ", " + random.choice(RAIN_TWEETS).format(RAIN_TEXT)
 							try:
 								twitter.update_status(status=tweetText, in_reply_to_status_id=twitter_mention_id)
+								twitter_mention_replied = True
 								LOG(LOG_INF,"Twitted succesfully: \"{}\"".format(tweetText), logPreLn=True)
 							except TwythonError as e:
 								LOG(LOG_ERR,"<<< ERROR: TwythonError: \"{}\" >>>".format(e), logPreLn=True)
 			
 					# MENTIONS: PHOTO
-					elif (("photo" in twitter_mention_text_lower) or ("picture" in twitter_mention_text_lower) or ("image" in twitter_mention_text_lower) or ("foto" in twitter_mention_text_lower)):
+					if (("photo" in twitter_mention_text_lower) or ("picture" in twitter_mention_text_lower) or ("image" in twitter_mention_text_lower) or ("foto" in twitter_mention_text_lower)):
 						
 						# get file and script names
 						ipCamFileName = ipCamFileNameDef.format(nowDatetime('%Y%m%d_%H%M%S'))
@@ -263,6 +274,7 @@ def txTwitterActionManager():
 							tweetText = "@" + twitter_mention_user_screen_name + ", " + "this is a live picture of myself!"
 							try:
 								twitter.update_status(status=tweetText, in_reply_to_status_id=twitter_mention_id, media_ids=[response['media_id']])
+								twitter_mention_replied = True
 								LOG(LOG_INF,"Twitted succesfully: \"{}\"".format(tweetText), logPreLn=True)
 							except TwythonError as e:
 								LOG(LOG_ERR,"<<< ERROR: TwythonError: \"{}\" >>>".format(e), logPreLn=True)
@@ -272,15 +284,17 @@ def txTwitterActionManager():
 							tweetText = "@" + twitter_mention_user_screen_name + ", " + "oops, there was an error capture the photo =(!"
 							try:
 								twitter.update_status(status=tweetText, in_reply_to_status_id=twitter_mention_id)
+								twitter_mention_replied = True
 								LOG(LOG_INF,"Twitted succesfully: \"{}\"".format(tweetText), logPreLn=True)
 							except TwythonError as e:
 								LOG(LOG_ERR,"<<< ERROR: TwythonError: \"{}\" >>>".format(e), logPreLn=True)
 						
 					# MENTIONS: ELSE
-					else: 
+					if (not twitter_mention_replied): 
 						tweetText = "@" + twitter_mention_user_screen_name + ", " + random.choice(DEFAULT_TWEETS)
 						try:
 							twitter.update_status(status=tweetText, in_reply_to_status_id=twitter_mention_id)
+							twitter_mention_replied = True
 							LOG(LOG_INF,"Twitted succesfully: \"{}\"".format(tweetText), logPreLn=True)
 						except TwythonError as e:
 							LOG(LOG_ERR,"<<< ERROR: TwythonError: \"{}\" >>>".format(e), logPreLn=True)

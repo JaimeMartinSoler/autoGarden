@@ -48,7 +48,8 @@ def DBsetup(DBconn=None, DBcursor=None):
 		DBcursor = DBconn.cursor()
 	elif (DBcursor==None):
 		DBcursor = DBconn.cursor()
-	DBcursor.execute('''
+	DBcursor.execute(
+	'''
 		CREATE TABLE IF NOT EXISTS {} (
 			ID INTEGER PRIMARY KEY AUTOINCREMENT,
 			DATETIME TEXT NOT NULL,
