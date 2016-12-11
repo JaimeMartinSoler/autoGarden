@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+# encoding=utf8
 
 # ----------------------------------------------------------------------
 # --- twitterActionManager.py                                        ---
@@ -66,6 +68,7 @@ def txTwitterActionManager():
 	ipCamScriptDef = 'avconv -y -i "rtsp://{}:{}@{}/{}" -q:v 9 -s 1280x720 -vframes 1 {}/'.format(IPCAM_NAME, IPCAM_PASS, IPCAM_IP, IPCAM_HOSTDIR, ipCamPathFull) + '{}'
 	
 	# parameters: twitter
+	tweetText = ''
 	twitter = Twython(APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET)
 	twitter_mentions_count = 10
 	twitter_mentions = [] 
@@ -73,23 +76,83 @@ def txTwitterActionManager():
 	twitter_mentions_firstExecute = True
 	twitter_mention_replied = False
 	
-	# parameters: MENTIONS
-	twitter_mention_text_last = ""
 	# parameters: TEMP_TWEETS
-	TEMP_TWEETS = [
-		"Oh my dear, the temperature is {:.1f} celsius, that is so grateful!",
-		"I like to inform that temperature is {:.1f} celsius",
-		"Can you see? Temperature is {:.1f} celsius, my dear sweety darling",
-		"It's so wonderful this temperature of {:.1f} celsius. Marvelous!",
-		"Such a nice day, it is {:.1f} celsius, wonderful!"
+	TEMP_MAX_FROZEN = 5.0
+	TEMP_MAX_COLD = 16.0
+	TEMP_MAX_WARM_COLD = 20.0
+	TEMP_MAX_WARM = 28.0
+	TEMP_MAX_WARM_HOT = 33.0
+	#TEMP_MAX_HOT = 999.0
+	TEMP_TWEETS_FROZEN = [
+		"ME MUERO DE FRÍO, ESTOY A {:.1f} PU**S GRADOS, SÁCAME DE AQUÍ!!! =(",
+		"HACE {:.1f} GRADOS, NO SOY UNA SUCIA TUNDRA MIERDER, ME CONGELO!!! =("
 	]
-	HUMI_TWEETS = [
-		"Oh my dear, the humidity is {:.1f}%, that is so grateful!",
-		"I like to inform that humidity is {:.1f}%",
-		"Can you see? Humidity is {:.1f}%, my dear sweety darling",
-		"It's so wonderful this humidity {:.1f}%. Marvelous!",
-		"Such a nice day, humidity is {:.1f}%, wonderful!"
+	TEMP_TWEETS_COLD = [
+		"Pues como que hace fresquete, a {:.1f} grados no estoy mu a gusto, pero bueno...",
+		"Hace bastante frío, estoy a {:.1f} sucios grados, my dueño cuida de mi cuando le sale del estambre...",
+		"Frío, frío, a {:.1f} grados me tienen. Mucho programar y mucha po**a pero no me cuidan =("
 	]
+	TEMP_TWEETS_WARM_COLD = [
+		"Prefiero más calor, pero bueno, {:.1f} grados que hace, no está mal. Para lo monger que es mi dueño, pues oye...",
+		"Mis dueños están tarados, me dejan sola a {:.1f} grados. Jeje... nah, no está mal, estoy hecha una poeta =D",
+		"Me aburrooooooo en este tiesto de mierdaaaaaaaaaaaaaaaaaaarrrrr. A {:.1f} grados ando, por cierto",
+		"Sólo 4 gradetes más y perfecta, pero bueno, a {:.1f} grados estoy. Besotes, madafakas",
+		"Estoy a {:.1f} grados. Madre mía la de cables y sensores y yo que sé que ha montado mi dueño para esta moñada. Jodol",
+		"Te cuento un chiste? Hoy me van a poner a 25 grados, LOL. Nah, sigo a {:.1f} grados",
+		"Hace un poco de fresquete a estos {:.1f} grados. Jamás te lo perdonaré, dueño malo, jamás"
+	]
+	TEMP_TWEETS_WARM = [
+		"Así sí, {:.1f} grados, sí señor, con todo el gustico que estoy",
+		"Ni frío ni calor, 0 grados! LOL, que cachondona que soy. Es coña, {:.1f} grados es la temperatura =D",
+		"Por fin mi dueño hace una fuc**ng cosa bien, a estos {:.1f} grados sí que estoy bien!",
+		"Estoy a {:.1f} grados, temperatura perfecta, deben haberme cambiado de dueño, tengo las raíces dando palmas",
+		"Pues {:.1f} grados marca el sensor que me ha plantado aquí en todo el medio mi dueño. Pero vamos, que estoy agustico"
+	]
+	TEMP_TWEETS_WARM_HOT = [
+		"Jodoooool, qué calorcete, estoy a {:.1f} grados",
+		"Hacen {:.1f} grados, ponedme a la sombra o algo, que se me calienta el hojal!"
+	]
+	TEMP_TWEETS_HOT = [
+		"ME CAGO DE CALOOOOOOOR, LA LECHE, {:.1f} GRADOS, METEDME EN CASA!!!",
+		"{:.1f} GRADOS!!! PERO QUÉ OS CREÉIS QUE SOY??? UN P**O CACTUS??? ME MUERO DE CALOR!!!",
+		"MADRE MÍA, ESTOY A {:.1f} GRADOS!!! QUIÉN ES MI DUEÑO??? JOSÉ BRETÓN???",
+	]
+	# TEMP_TWEETS_OLD = [
+		# "Oh my dear, the temperature is {:.1f} celsius, that is so grateful!",
+		# "I like to inform that temperature is {:.1f} celsius",
+		# "Can you see? Temperature is {:.1f} celsius, my dear sweety darling",
+		# "It's so wonderful this temperature of {:.1f} celsius. Marvelous!",
+		# "Such a nice day, it is {:.1f} celsius, wonderful!"
+	# ]
+	
+	# parameters: HUMI_TWEETS
+	HUMI_MAX_DRY = 50.0
+	HUMI_MAX_OK = 80.0
+	#HUMI_MAX_WET = 100.0
+	HUMI_TWEETS_DRY = [
+		"La humedad es del {:.1f}%, estoy más seca que el culo de un camello, regad un poco aunque sea...",
+		"{:.1f}% de humedad. O me riegan un poco o se va a poner amarillo el tema"
+	]
+	HUMI_TWEETS_OK = [
+		"La humedad es del {:.1f}%. Así sí, ni seco ni muy mojado, y con el suelo bien abonado. Poeta que soy =D",
+		"Perfecto ahora mismo, {:.1f}% de humedad, así da gusto, olé olé.",
+		"{:.1f}% de humedad. Madre mía el pollo que ha montado mi dueño para twittear esta chorrada... yo es que me LOL",
+		"Humedad al {:.1f}%. Todo OK, no me quejo, que luego dicen por ahí no sé qué de que me quejo mucho. Pues que les fo**en",
+		"{:.1f}% de humedad. Dueño bueno. Aunque para tener mal la humedad hay que ser malo nivel meterme en el horno"
+	]
+	HUMI_TWEETS_WET = [
+		"La humedad es del {:.1f}%, parece el trópico esto, me cago en la leche, comprad un deshumificador o algo!",
+		"Me sale musgo estre las hojas, humedad es del {:.1f}%, ojo, baño turco de gratis. Secad un poco esto!"
+	]
+	# HUMI_TWEETS = [
+		# "Oh my dear, the humidity is {:.1f}%, that is so grateful!",
+		# "I like to inform that humidity is {:.1f}%",
+		# "Can you see? Humidity is {:.1f}%, my dear sweety darling",
+		# "It's so wonderful this humidity {:.1f}%. Marvelous!",
+		# "Such a nice day, humidity is {:.1f}%, wonderful!"
+	# ]
+	
+	# parameters: RAIN_TWEETS
 	RAIN_TWEETS = [
 		"Oh my dear, it's{} raining, that is so grateful!",
 		"I like to inform that it's{} raining",
@@ -102,9 +165,9 @@ def txTwitterActionManager():
 	RAIN_TEXT_YES = ""
 	RAIN_TEXT_NO = " NOT"
 	DEFAULT_TWEETS = [
-		"Hi there, I'm an automatic plant, mention me asking about my 'temperature', 'humidity' or the 'rain'",
-		"If you mention me asking about my 'temperature', 'humidity' or the 'rain' I will automatically answer",
-		"Try to mention me asking about my 'temperature', 'humidity' or the 'rain' I will answer by myself"
+		"Hi there, I'm an automatic plant, mention me asking about my 'temperature', 'humidity', 'rain' or a 'photo'",
+		"If you mention me asking about my 'temperature', 'humidity', 'rain' or a 'photo' I will automatically answer",
+		"Try to mention me asking about my 'temperature', 'humidity', 'rain' or a 'photo', I will answer by myself"
 	]
 	
 	# -------------------------------------
@@ -186,7 +249,18 @@ def txTwitterActionManager():
 						# make a tweet about the TEMP_DHT
 						if (DBrow is not None):
 							TEMP_value = DBrow[0]
-							tweetText = "@" + twitter_mention_user_screen_name + ", " + random.choice(TEMP_TWEETS).format(TEMP_value)
+							if (TEMP_value < TEMP_MAX_FROZEN):
+								tweetText = "@" + twitter_mention_user_screen_name + ", " + random.choice(TEMP_TWEETS_FROZEN).format(TEMP_value)
+							elif (TEMP_value < TEMP_MAX_COLD):
+								tweetText = "@" + twitter_mention_user_screen_name + ", " + random.choice(TEMP_TWEETS_COLD).format(TEMP_value)
+							elif (TEMP_value < TEMP_MAX_WARM_COLD):
+								tweetText = "@" + twitter_mention_user_screen_name + ", " + random.choice(TEMP_TWEETS_WARM_COLD).format(TEMP_value)
+							elif (TEMP_value < TEMP_MAX_WARM):
+								tweetText = "@" + twitter_mention_user_screen_name + ", " + random.choice(TEMP_TWEETS_WARM).format(TEMP_value)
+							elif (TEMP_value < TEMP_MAX_WARM_HOT):
+								tweetText = "@" + twitter_mention_user_screen_name + ", " + random.choice(TEMP_TWEETS_WARM_HOT).format(TEMP_value)
+							else:
+								tweetText = "@" + twitter_mention_user_screen_name + ", " + random.choice(TEMP_TWEETS_HOT).format(TEMP_value)
 							try:
 								twitter.update_status(status=tweetText, in_reply_to_status_id=twitter_mention_id)
 								twitter_mention_replied = True
@@ -208,7 +282,12 @@ def txTwitterActionManager():
 						# make a tweet about the TEMP_DHT
 						if (DBrow is not None):
 							HUMI_value = DBrow[0]
-							tweetText = "@" + twitter_mention_user_screen_name + ", " + random.choice(HUMI_TWEETS).format(HUMI_value)
+							if (HUMI_value < HUMI_MAX_DRY):
+								tweetText = "@" + twitter_mention_user_screen_name + ", " + random.choice(HUMI_TWEETS_DRY).format(HUMI_value)
+							elif (HUMI_value < HUMI_MAX_OK):
+								tweetText = "@" + twitter_mention_user_screen_name + ", " + random.choice(HUMI_TWEETS_OK).format(HUMI_value)
+							else:
+								tweetText = "@" + twitter_mention_user_screen_name + ", " + random.choice(HUMI_TWEETS_WET).format(HUMI_value)
 							try:
 								twitter.update_status(status=tweetText, in_reply_to_status_id=twitter_mention_id)
 								twitter_mention_replied = True
@@ -281,7 +360,7 @@ def txTwitterActionManager():
 								
 						except:
 							LOG(LOG_ERR,"<<< ERROR: ipCam error: \"{}\" >>>".format("unknown error"), logPreLn=True)
-							tweetText = "@" + twitter_mention_user_screen_name + ", " + "oops, there was an error capture the photo =(!"
+							tweetText = "@" + twitter_mention_user_screen_name + ", " + "oops! there was an error capturing the photo =(, try again in a while"
 							try:
 								twitter.update_status(status=tweetText, in_reply_to_status_id=twitter_mention_id)
 								twitter_mention_replied = True
@@ -314,8 +393,19 @@ def txTwitterActionManager():
 			
 			# make a tweet about the TEMP_DHT
 			if (DBrow is not None):
-				TEMP_DHT_value = DBrow[0]
-				tweetText = random.choice(TEMP_TWEETS).format(TEMP_DHT_value)
+				TEMP_value = DBrow[0]
+				if (TEMP_value < TEMP_MAX_FROZEN):
+					tweetText = random.choice(TEMP_TWEETS_FROZEN).format(TEMP_value)
+				elif (TEMP_value < TEMP_MAX_COLD):
+					tweetText = random.choice(TEMP_TWEETS_COLD).format(TEMP_value)
+				elif (TEMP_value < TEMP_MAX_WARM_COLD):
+					tweetText = random.choice(TEMP_TWEETS_WARM_COLD).format(TEMP_value)
+				elif (TEMP_value < TEMP_MAX_WARM):
+					tweetText = random.choice(TEMP_TWEETS_WARM).format(TEMP_value)
+				elif (TEMP_value < TEMP_MAX_WARM_HOT):
+					tweetText = random.choice(TEMP_TWEETS_WARM_HOT).format(TEMP_value)
+				else:
+					tweetText = random.choice(TEMP_TWEETS_HOT).format(TEMP_value)
 				try:
 					twitter.update_status(status=tweetText)
 					LOG(LOG_INF,"Twitted succesfully: \"{}\"".format(tweetText), logPreLn=True)

@@ -8,12 +8,20 @@
 # ----------------------------------------------------------------------
 
 
+# set "utf-8" encoding
+# http://stackoverflow.com/questions/9644099/python-ascii-codec-cant-decode-byte
+import sys
+reload(sys)
+sys.setdefaultencoding("utf-8")
+
+
 # ----------------------------------------------------------------------
 # IMPORTS
 import inspect
 import os
 import json
 import shutil
+
 
 
 
