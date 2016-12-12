@@ -95,9 +95,59 @@ class Status:
 			shutil.copy(self.statusDefFileNameFull, self.statusFileNameFull)
 		except:
 			LOG(LOG_WAR, "<<< WARNING: unable to copy file \"{}\">>>".format(self.statusDefFileNameFull))
+
+
+# ----------------------------------------------------------------------
+# STATUS: CLASS AND OBJECT
+class TweetData:
+
+	# non-JSON parameters:
+	tweetDataFileNameFull = "{}/data/TWEETDATA.json"
+	modificationTime = 0 # seconds since epoch
+	# dataJSON parameter:
+	dataJSON = ""
+	
+	# __init__(self)
+	def __init__(self):
+		# non-JSON parameters:
+		self.tweetDataFileNameFull = self.tweetDataFileNameFull.format(PROCESS.mainPath)
+		self.modificationTime = os.path.getmtime(self.tweetDataFileNameFull)
+		# dataJSON parameter:
+		self.dataJSONread()
+		
+	# dataJSONread (self)
+	def dataJSONread(self):
+		with open(self.tweetDataFileNameFull, 'r') as dataFile:
+			self.dataJSON = json.load(dataFile)
+	
+	# get (self, parameter)
+	# check update in modification time, may no need to open
+	def get(self, p0, p1=None, p2=None, p3=None, p4=None, p5=None):
+		try:
+			modificationTimeCurrent = os.path.getmtime(self.tweetDataFileNameFull)
+		except:
+			LOG(LOG_WAR, "<<< WARNING: unable to read file \"{}\">>>".format(self.tweetDataFileNameFull))
+		if (modificationTimeCurrent > self.modificationTime):
+			self.modificationTime = modificationTimeCurrent
+			self.dataJSONread()
+		value = self.dataJSON[p0]
+		if (p1 is not None):
+			value = value[p1]
+			if (p2 is not None):
+				value = value[p2]
+				if (p3 is not None):
+					value = value[p3]
+					if (p4 is not None):
+						value = value[p4]
+						if (p5 is not None):
+							value = value[p5]
+		return value
+
+						
 			
+
 # STATUS: OBJECT
 # PROCESS.mainPath must exist before Status() is executed
 STATUS = Status()		
-
+TWEETDATA = TweetData()
 

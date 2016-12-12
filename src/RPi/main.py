@@ -27,8 +27,6 @@ from DBmanager import *
 from actionManager import *
 
 
-
-
 # --------------------------------------------------------------
 # MAIN LOOP
 def main():

@@ -1,0 +1,258 @@
+{
+	"TEMP":
+	{
+		"TEXT":
+		{
+			"ENG":
+			[
+				["temperature", "thermometer", "termometer", "hot", "cold", "warm", "freeze", "frozen", "degree"]
+			],
+			"SPA":
+			[
+				["temperatura", "termómetro", "termometro", "caliente", "calor", "caliente", "caluroso", "frío", "frio", "frescor", "fresquete", "fresquito", "grado"]
+			]
+		},
+		"LIMIT_MAX":[5.0, 16.0, 20.0, 28.0, 33.0],
+		"TWEET":
+		{
+			"ENG":
+			[
+				[]
+			],
+			"SPA":
+			[
+				[
+					"ME MUERO DE FRÍO, ESTOY A {:.1f} PU**S GRADOS, SÁCAME DE AQUÍ!!! =(",
+					"HACE {:.1f} GRADOS, NO SOY UNA SUCIA TUNDRA MIERDER, ME CONGELO!!! =("
+				],
+				[
+					"Pues como que hace fresquete, a {:.1f} grados no estoy mu a gusto, pero bueno...",
+					"Hace bastante frío, estoy a {:.1f} sucios grados, mi dueño me cuida cuando le sale del estambre...",
+					"Frío, frío, a {:.1f} grados me tienen. Mucho programar y mucha po**a pero no me cuidan =("
+				],
+				[
+					"Prefiero más calor, pero bueno, {:.1f} grados que hace, no está mal. Para lo monger que es mi dueño, pues oye...",
+					"Mis dueños están tarados, me dejan sola a {:.1f} grados. Jeje... nah, no está mal, estoy hecha una poeta =D",
+					"Me aburrooooooo en este tiesto de mierdaaaaaaaaaaaaaaaaaaarrrrr. A {:.1f} grados ando, por cierto",
+					"Sólo 4 gradetes más y perfecta, pero bueno, a {:.1f} grados estoy. Besotes, madafakas",
+					"Estoy a {:.1f} grados. Madre mía la de cables y sensores y yo que sé que ha montado mi dueño para esta moñada. Jodol",
+					"Te cuento un chiste? Hoy me van a poner a 25 grados, LOL. Nah, sigo a {:.1f} grados",
+					"Hace un poco de fresquete a estos {:.1f} grados. Jamás te lo perdonaré, dueño malo, jamás"
+				],
+				[
+					"Así sí, {:.1f} grados, sí señor, con todo el gustico que estoy",
+					"Ni frío ni calor, 0 grados! LOL, que cachondona que soy. Es coña, {:.1f} grados es la temperatura =D",
+					"Por fin mi dueño hace una fuc**ng cosa bien, a estos {:.1f} grados sí que estoy debuti!",
+					"Estoy a {:.1f} grados, temperatura perfecta, deben haberme cambiado de dueño, tengo las raíces dando palmas",
+					"Pues {:.1f} grados marca el sensor que me ha plantado aquí en todo el medio mi dueño. Pero vamos, que estoy agustico"
+				],
+				[
+					"Jodoooool, qué calorcete, estoy a {:.1f} grados",
+					"Hacen {:.1f} grados, ponedme a la sombra o algo, que se me calienta el hojal!"
+				],
+				[
+					"ME CAGO DE CALOOOOOOOR, LA LECHE, {:.1f} GRADOS, METEDME EN CASA!!!",
+					"{:.1f} GRADOS!!! PERO QUÉ OS CREÉIS QUE SOY??? UN P**O CACTUS??? ME MUERO DE CALOR!!!",
+					"MADRE MÍA, ESTOY A {:.1f} GRADOS!!! QUIÉN ES MI DUEÑO??? JOSÉ BRETÓN???"
+				]
+			]
+		}
+	},
+	
+	
+	"HUMI":
+	{
+		"TEXT":
+		{
+			"ENG":
+			[
+				["humidity", "hygrometer", " wet", " damp", " moist", " dry", " dried"]
+			],
+			"SPA":
+			[
+				["humed", "húmed", "higrómetro", "higrometro", " seco", " seca", " reseco", " reseca", " sequía", " sequia"]
+			]
+		},
+		"LIMIT_MAX":[50.0, 80.0],
+		"TWEET":
+		{
+			"ENG":
+			[
+				[]
+			],
+			"SPA":
+			[
+				[
+					"La humedad es del {:.1f}%, estoy más seca que el culo de un camello, regad un poco aunque sea...",
+					"{:.1f}% de humedad. O me riegan un poco o se va a poner amarillo el tema"
+				],
+				[
+					"La humedad es del {:.1f}%. Así sí, ni seco ni muy mojado, y con el suelo bien abonado. Poeta que soy =D",
+					"Perfecto ahora mismo, {:.1f}% de humedad, así da gusto, olé olé.",
+					"{:.1f}% de humedad. Madre mía el pollo que ha montado mi dueño para twittear esta chorrada... yo es que me LOL",
+					"Humedad al {:.1f}%. Todo OK, no me quejo, que luego dicen por ahí no sé qué de que me quejo mucho. Pues que les fo**en",
+					"{:.1f}% de humedad. Dueño bueno. Aunque para tener mal la humedad hay que ser malo nivel meterme en el horno"
+				],
+				[
+					"La humedad es del {:.1f}%, parece el trópico esto, me cago en la leche, comprad un deshumificador o algo!",
+					"Me sale musgo estre las hojas, humedad es del {:.1f}%, ojo, baño turco de gratis. Secad un poco esto!"
+				]
+			]
+		}
+	},
+	
+	
+	"RAIN":
+	{
+		"TEXT":
+		{
+			"ENG":
+			[
+				["rain"]
+			],
+			"SPA":
+			[
+				["lluvi", "llov", "llueve"]
+			]
+		},
+		"LIMIT_MAX":[30.0],
+		"TWEET":
+		{
+			"ENG":
+			[
+				[]
+			],
+			"SPA":
+			[
+				[
+					"No llueve, así que guay. Que luego si no, esto se pone todo perdido",
+					"No cae una gota, mejor para mi. Prefiero que me riegen, lo más... no sé... personal",
+					"El sensoraco este que parece una maraña marca que no llueve y estoy de acuerdo, ni una gotica",
+					"No está lloviendo, soy más de que me riegen a mano, llámame romántica",
+					"Ni media gota, de momento no llueve por aquí. Ale, besotes"
+				],
+				[
+					"El cielo está como una regadera, LOL, qué jocosa soy. Vamos, que sí, que está lloviendo",
+					"Está lloviendo like crazy por aquí, a ver si termina, que me empapo y no me gusta =(",
+					"Está lloviendo bastante. Me siento húmeda y sucia... no hagáis chistes =("
+				]
+			]
+		}
+	},
+	
+	
+	"DEFAULT":
+	{
+		"TWEET":
+		{
+			"ENG":
+			[
+				[]
+			],
+			"SPA":
+			[
+				[
+					"Soy una planta automática, mencióname preguntando mi temperatura, humedad, lluvia o foto y te contesto en directo!",
+					"Si me pides una foto te la envío en directo! Además puedes preguntarme mi temperatura, humedad o si llueve",
+					"Me saco selfies en directo, chaval! Pídeme una foto y verás. También puedes pedirme mi temperatura, humedad o si llueve",
+					"Pídeme una foto y me la saco en directo y te la envío. Prueba también con la temperatura, humedad o la lluvia"
+				],
+				[
+					"Además, si me twitteas mucho, le pediré a mi dueño que escriba tu nombre y saldrás en todas mis fotos =D",
+					"Y si me twitteas mucho, le diré a mi dueño que escriba tu nombre a mi lado y saldrás en todas mis foticos",
+					"Y de regalo, si me twitteas mucho, pediré que pongan tu nombre a mi lado y saldrás en todas mis fotos!"
+				]
+			]
+		}
+	},
+	
+	
+	"PHOTO":
+	{
+		"TEXT":
+		{
+			"ENG":
+			[
+				["photo", "picture"]
+			],
+			"SPA":
+			[
+				["foto", "imagen"]
+			]
+		},
+		"TWEET":
+		{
+			"ENG":
+			[
+				[]
+			],
+			"SPA":
+			[
+				[
+					"Aquí tienes mi selfi en vivo y en directo, a que estoy guapetona? =D",
+					"Te envío esta fotaca recién sacada!",
+					"Ahí te va una foto de ahora mismo, de mi perfil bueno",
+					"Esta es mi foto. Salgo to' sexy, y lo sabes"
+				],
+				[
+					"Mierda. Ha habido un error con la cámara. Se lo digo a mi dueño, prueba en un rato otra vez",
+					"Vaya, jo**r. No funciona la cámara, pido que la arreglen ahora mismo. Sorry, prueba de nuevo en un rato",
+					"Nada, que no va la cámara. Culpa del inútil de mi dueño, ahora se lo comento. Prueba luego otra vez",
+					"Joooooo**r. Justo ahora no va la cámara. Ya la ha líado mi dueño, se lo comento. Prueba más tarde"
+				]
+			]
+		}
+	},
+	
+	
+	"OTHER":
+	{
+		"TEXT":
+		{
+			"ENG":
+			[
+				["creator", "inventor", "father", "owner", "author", "lord"],
+				["english", "inglés", "ingles", "language"]
+			],
+			"SPA":
+			[
+				["mentxu", "menchu"],
+				["creó", "inventó", "inventor", "padre", "creador", "dueño", "señor", "autor"],
+				["español", "castellano", "spanish", "spain", "españa", "catalán", "catalan", "gallego", "vasco", "euskera", "idioma"]
+			]
+		},
+		"TWEET":
+		{
+			"ENG":
+			[
+				[
+				  "My creator, owner and lord is the so-called Jaime, an engineer and software developer",
+				  "I've been planted by a geek name Jaime. He programs a lot, but doesn't take care of me =("
+				],
+				[
+					"I understand English, however I just anwser in Spanish. For now...",
+					"I just speak Spanish, but I understand English if you write clearly",
+					"I'm studying English and I already understand it, but for now I only write in Spaninsh"
+				]
+			],
+			"SPA":
+			[
+				[
+					"Por cierto, Mentxu es una amiga mía es muy bella",
+					"Sobre Mentxu te diré que es una amiga de mi dueño, con una belleza sin parangón",
+					"Mentxu es una amiga mi dueño. Nadie la para, va que se embala, nadie la frena, está to' buena"
+				],
+				[
+					"Mi creador, dueño y señor es una tal Jaime, ingeniero y programador",
+					"He sido plantada por un friki llamado Jaime. Mucho programar pero no me cuida bien =("
+				],
+				[
+					"Entiendo el inglés, aunque sólo contesto en español. De momento...",
+					"Sólo hablo castellano, pero entiendo el inglés si me lo escribes bien clarito",
+					"Estoy aprendiendo inglés y ya lo entiendo, pero por ahora sólo escribo en español"
+				]
+			]
+		}
+	}
+}
+
