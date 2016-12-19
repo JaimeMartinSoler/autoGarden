@@ -160,6 +160,7 @@ def txTwitterActionManager():
 	
 	# parameters: timers
 	timer_tweet_TEMP_DHT = Timer(periodMins=240.0)
+	timer_tweet_PHOTO = Timer(periodMins=60.0)
 	timer_mentions = Timer(periodMins=get_mentions_timeline_periodMin)
 	
 	# parameters: ip camera
@@ -383,7 +384,7 @@ def txTwitterActionManager():
 				
 		# AUTO TWEETS MANAGEMENT
 		
-		# TEMP_DHT management
+		# AUTO TWEETS - TEMP_DHT management
 		if (timer_tweet_TEMP_DHT.isReady()):
 		
 			# get new parameter to DB (set tx action and wait rx action)
@@ -413,5 +414,51 @@ def txTwitterActionManager():
 				twitterChooseTweetAndUpdateStatus(twitter, TWEETDATA.get('TEMP', 'TWEET', 'SPA', TEMP_limit_idx), formatValue=TEMP_value)
 			else:
 				LOG(LOG_WAR,"<<< WARNING: No rows found in DB (txTwitterActionManager, WEATHER, TEMP) >>>", logPreLn=True)
+	
+		# AUTO TWEETS - PHOTO management
+		if (timer_tweet_PHOTO.isReady()):
 			
+			# get file and script names
+			ipCamFileName = ipCamFileNameDef.format(nowDatetime('%Y%m%d_%H%M%S'))
+			ipCamFileNameFull = ipCamPathFull + '/' + ipCamFileName
+			ipCamScript = ipCamScriptDef.format(ipCamFileName)
+			
+			try:
+				# call to the process to get the image from the ip cam
+				LOG(LOG_DET, "TWITTER: about to execute ipCamScript: {}".format(ipCamScript))
+				subprocess.call(ipCamScript, shell=True)
+				LOG(LOG_DET, "TWITTER: ipCamScript OK")
 
+				# get the image ready for the tweet
+				# https://twython.readthedocs.io/en/latest/usage/advanced_usage.html#updating-status-with-image
+				LOG(LOG_DET, "TWITTER: Image.open(ipCamFileNameFull)...")
+				photo = Image.open(ipCamFileNameFull)
+				LOG(LOG_DET, "TWITTER: Image.open(ipCamFileNameFull) OK")
+				# ipCam lies on its left side: rotate 90 (anti-clockwise / to the left)
+				LOG(LOG_DET, "TWITTER: photo.rotate...")
+				photo = photo.rotate(STATUS.get("ipCamRotation"))
+				LOG(LOG_DET, "TWITTER: photo.rotate OK")
+				# basewidth = 320
+				# wpercent = (basewidth / float(photo.size[0]))
+				# height = int((float(photo.size[1]) * float(wpercent)))
+				# photo = photo.resize((basewidth, height), Image.ANTIALIAS)
+				LOG(LOG_DET, "TWITTER: image_io = StringIO()...")
+				image_io = StringIO()
+				LOG(LOG_DET, "TWITTER: image_io = StringIO() OK")
+				LOG(LOG_DET, "TWITTER: image_io = photo.save(image_io, format='JPEG')...")
+				photo.save(image_io, format='JPEG')
+				LOG(LOG_DET, "TWITTER: image_io = photo.save(image_io, format='JPEG') OK")
+				LOG(LOG_DET, "TWITTER: image_io = photo.save(image_io, image_io.seek(0)...")
+				image_io.seek(0)
+				LOG(LOG_DET, "TWITTER: image_io = photo.save(image_io, image_io.seek(0) OK")
+				LOG(LOG_DET, "TWITTER: image_io = response ...")
+				response = twitter.upload_media(media=image_io)
+				LOG(LOG_DET, "TWITTER: image_io = response OK")
+				
+				# make a tweet about the photo
+				twitterChooseTweetAndUpdateStatus(twitter, TWEETDATA.get('PHOTO', 'TWEET', 'SPA', 0), tm_media=[response['media_id']])
+				
+			except:
+				LOG(LOG_ERR,"<<< ERROR: ipCam error: \"{}\" >>>".format("unknown error"), logPreLn=True)
+				twitterChooseTweetAndUpdateStatus(twitter, TWEETDATA.get('PHOTO', 'TWEET', 'SPA', 1))
+				
