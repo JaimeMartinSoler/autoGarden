@@ -1,0 +1,10 @@
+
+Twitter frozen:
+  - Check why the twitter module gets frozen without feedback or restore
+
+ipCam issues:
+  - Get output of ipCam scrips to be able to debug it
+  - Solve dynamic IP assignation afer internet connection restart
+  - Solve black or really dark images
+  - Solve long time outs of ipCam (maybe creating another thread?)
+
